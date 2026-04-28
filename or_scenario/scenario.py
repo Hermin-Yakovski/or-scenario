@@ -1,10 +1,27 @@
 # or_scenario/scenario.py
 from pathlib import Path
 from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Tuple, Type
+from datetime import datetime
 
 from dal import DataHandler
 from or_algo import Algorithm
 from register import Dimension, Id, Parameter, Register
+from pydantic import BaseModel, Field
+
+
+class BaseRequest(BaseModel):
+    """Base request with common fields."""
+    request_id: int = Field(default_factory=lambda: int(datetime.now().strftime("%y%m%d%H%M%S%f")[:-4]),
+                            description="identity of the data")
+
+
+class BaseResponse(BaseModel):
+    """Base response with common fields."""
+    request_id: int = Field(..., description="identity of the data")
+    status: int = Field(..., description="status of the service")
+    message: str = Field(default="Default message", description="message of the service")
+    timestamp: datetime = Field(default_factory=datetime.now, description="timestamp of the data")
+    response: Any = Field(default=None, description="response of the data")
 
 
 class LoadStep:

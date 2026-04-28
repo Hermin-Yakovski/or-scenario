@@ -2,9 +2,10 @@
 from pathlib import Path
 from typing import Any, Dict, List
 from unittest.mock import MagicMock
+from datetime import datetime
 from dal import JsonHandler, DataHandler
 from or_scenario import Scenario
-from or_scenario.scenario import LoadStep
+from or_scenario.scenario import LoadStep, BaseRequest
 from register import Register
 
 
@@ -229,3 +230,38 @@ def test_scenario_integration():
         # Verify data was loaded correctly
         assert scenario.get(TestSalesVolume, (Product, Region), (1, 1)) == 100.0
         assert scenario.get(TestPrice, (Product, Region), (1, 2)) == 12.0
+
+
+def test_baserequest_creation():
+    """Test BaseRequest can be created with default request_id."""
+    request = BaseRequest()
+    assert isinstance(request.request_id, int)
+    assert len(str(request.request_id)) == 14  # YYMMDDHHMMSSFF format
+
+
+def test_baseresponse_creation():
+    """Test BaseResponse can be created with all fields."""
+    from or_scenario.scenario import BaseResponse
+    response = BaseResponse(
+        request_id=12345,
+        status=200,
+        message="Success"
+    )
+    assert response.request_id == 12345
+    assert response.status == 200
+    assert response.message == "Success"
+    assert isinstance(response.timestamp, datetime)
+    assert response.response is None
+
+
+def test_baseresponse_with_response_field():
+    """Test BaseResponse can hold custom response data."""
+    from or_scenario.scenario import BaseResponse
+    custom_data = {"key": "value", "number": 42}
+    response = BaseResponse(
+        request_id=12345,
+        status=200,
+        message="Success",
+        response=custom_data
+    )
+    assert response.response == custom_data
