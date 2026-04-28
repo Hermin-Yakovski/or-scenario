@@ -67,12 +67,14 @@ class Scenario:
     _algorithm: Optional[Algorithm]
     _data: Register[Parameter]
     _load_steps: List[LoadStep]
+    _request: Optional[BaseRequest]
 
     def __init__(self, version_id: Hashable) -> None:
         self._version_id = version_id
         self._algorithm = None
         self._data = Register[Parameter]()
         self._load_steps = []
+        self._request = None
 
     def get(self, param: Parameter, dim: Tuple[Dimension, ...], ix: Tuple[int, ...]) -> Any:
         """Get a value from the scenario data.

@@ -265,3 +265,10 @@ def test_baseresponse_with_response_field():
         response=custom_data
     )
     assert response.response == custom_data
+
+
+def test_scenario_request_attribute():
+    """Test Scenario has _request attribute initialized to None."""
+    scenario = Scenario(1)
+    assert hasattr(scenario, '_request')
+    assert scenario._request is None
