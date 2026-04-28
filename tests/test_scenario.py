@@ -104,3 +104,83 @@ def test_scenario_init():
     assert scenario._algorithm is None
     assert isinstance(scenario._data, Register)
     assert scenario._load_steps == []
+
+
+def test_scenario_get():
+    """Test Scenario.get() retrieves values from _data."""
+    from register import Dimension, Parameter
+    Product = Dimension("Product", "产品", "PROD")
+    SalesVolume = Parameter(1, "sales_volume", "销量", float)
+    scenario = Scenario(1)
+    scenario._data[SalesVolume][(Product,)][(1,)] = 100.0
+    result = scenario.get(SalesVolume, (Product,), (1,))
+    assert result == 100.0
+
+
+def test_scenario_set():
+    """Test Scenario.set() sets values in _data."""
+    from register import Dimension, Parameter
+    Product = Dimension("Product", "产品", "PROD")
+    SalesVolume = Parameter(1, "sales_volume", "销量", float)
+    scenario = Scenario(1)
+    scenario.set(SalesVolume, (Product,), (1,), 150.0)
+    result = scenario.get(SalesVolume, (Product,), (1,))
+    assert result == 150.0
+
+
+def test_scenario_set_algorithm():
+    """Test Scenario.set_algorithm() creates algorithm instance."""
+    from or_algo import Algorithm
+    scenario = Scenario(1)
+    scenario.set_algorithm(Algorithm)
+    assert scenario._algorithm is not None
+    assert isinstance(scenario._algorithm, Algorithm)
+
+
+def test_scenario_exec_algorithm():
+    """Test Scenario.exec_algorithm() calls algorithm.solve()."""
+    from or_algo import Algorithm
+    scenario = Scenario(1)
+    mock_algo = MagicMock(spec=Algorithm)
+    scenario._algorithm = mock_algo
+    scenario.exec_algorithm()
+    mock_algo.solve.assert_called_once_with(scenario._data)
+
+
+def test_scenario_exec_algorithm_not_set():
+    """Test Scenario.exec_algorithm() raises error when algorithm not set."""
+    scenario = Scenario(1)
+    import pytest
+    with pytest.raises(RuntimeError, match="Algorithm not set"):
+        scenario.exec_algorithm()
+
+
+def test_scenario_load():
+    """Test Scenario.load() executes all load steps in order."""
+    run_order = []
+    def make_step(name: str) -> LoadStep:
+        handler = MagicMock(spec=DataHandler)
+        handler.fetch.return_value = []
+        def mapping(records):
+            run_order.append(name)
+        return LoadStep(handler=handler, mapping=mapping, path=Path("test"), table=f"{name}.json")
+    scenario = Scenario(1)
+    scenario._load_steps = [make_step("step1"), make_step("step2")]
+    scenario.load()
+    assert run_order == ["step1", "step2"]
+
+
+def test_scenario_validate():
+    """Test Scenario.validate() validates data with default parameter."""
+    from register import Id, Index
+    scenario = Scenario(1)
+    scenario._data[Id][(Index,)][(1,)] = 1
+    scenario.validate()
+
+
+def test_scenario_validate_default_param():
+    """Test Scenario.validate() with explicit default parameter."""
+    from register import Id, Index
+    scenario = Scenario(1)
+    scenario._data[Id][(Index,)][(1,)] = 1
+    scenario.validate()

@@ -1,10 +1,10 @@
 # or_scenario/scenario.py
 from pathlib import Path
-from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Tuple
+from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Tuple, Type
 
 from dal import DataHandler
 from or_algo import Algorithm
-from register import Dimension, Parameter, Register
+from register import Dimension, Id, Index, Parameter, Register
 
 
 class LoadStep:
@@ -56,3 +56,61 @@ class Scenario:
         self._algorithm = None
         self._data = Register[Parameter]()
         self._load_steps = []
+
+    def get(self, param: Parameter, dim: Tuple[Dimension, ...], ix: Tuple[int, ...]) -> Any:
+        """Get a value from the scenario data.
+
+        Args:
+            param: The parameter to retrieve
+            dim: The dimension tuple
+            ix: The index tuple
+
+        Returns:
+            The value at the specified location
+        """
+        return self._data[param][dim][ix]
+
+    def set(self, param: Parameter, dim: Tuple[Dimension, ...], ix: Tuple[int, ...], value: Any) -> None:
+        """Set a value in the scenario data.
+
+        Args:
+            param: The parameter to set
+            dim: The dimension tuple
+            ix: The index tuple
+            value: The value to set
+        """
+        self._data[param][dim][ix] = value
+
+    def set_algorithm(self, algo: Type[Algorithm], *args: Any, **kwargs: Any) -> None:
+        """Set the algorithm for this scenario.
+
+        Args:
+            algo: The Algorithm class to instantiate
+            *args: Positional arguments to pass to the algorithm
+            **kwargs: Keyword arguments to pass to the algorithm
+        """
+        self._algorithm = algo(*args, **kwargs)
+
+    def exec_algorithm(self) -> None:
+        """Execute the algorithm on this scenario's data.
+
+        Raises:
+            RuntimeError: If no algorithm has been set
+        """
+        if self._algorithm is None:
+            raise RuntimeError("Algorithm not set. Call set_algorithm() first.")
+        self._algorithm.solve(self._data)
+
+    def load(self) -> None:
+        """Execute all load steps to populate scenario data."""
+        for step in self._load_steps:
+            step.run()
+
+    def validate(self, param: Parameter = Id) -> None:
+        """Validate scenario data.
+
+        Args:
+            param: The parameter to validate (defaults to Id)
+        """
+        dim = self._data[param]
+        self._data.validate(dim, raise_errors=True)
