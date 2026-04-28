@@ -288,3 +288,12 @@ def test_scenario_response_accepts_any_arguments():
     # This should not raise TypeError for argument signature
     with pytest.raises(NotImplementedError):
         scenario.response("arg1", "arg2", key1="value1", key2="value2")
+
+
+def test_public_api_exports():
+    """Test BaseRequest and BaseResponse are exported in public API."""
+    import or_scenario
+    assert hasattr(or_scenario, 'BaseRequest')
+    assert hasattr(or_scenario, 'BaseResponse')
+    assert 'BaseRequest' in or_scenario.__all__
+    assert 'BaseResponse' in or_scenario.__all__
