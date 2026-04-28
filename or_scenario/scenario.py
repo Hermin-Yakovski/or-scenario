@@ -28,6 +28,18 @@ class LoadStep:
         self.limit = limit
         self.strict = strict
 
+    def run(self) -> None:
+        """Fetch data via handler and call mapping function."""
+        records = self.handler.fetch(
+            path=self.path,
+            table=self.table,
+            cols=self.cols,
+            filter_=self.filter_,
+            limit=self.limit,
+            strict=self.strict
+        )
+        self.mapping(records)
+
 
 class Scenario:
     """Template framework for Operations Research workflows.
