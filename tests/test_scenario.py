@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from dal import JsonHandler, DataHandler
 from or_scenario import Scenario
 from or_scenario.scenario import LoadStep
-from register import Register, Parameter
+from register import Register
 
 
 def test_loadstep_init():

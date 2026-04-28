@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Tupl
 
 from dal import DataHandler
 from or_algo import Algorithm
-from register import Dimension, Id, Index, Parameter, Register
+from register import Dimension, Id, Parameter, Register
 
 
 class LoadStep:
