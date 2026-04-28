@@ -1,4 +1,5 @@
 # tests/test_scenario.py
+import pytest
 from pathlib import Path
 from typing import Any, Dict, List
 from unittest.mock import MagicMock
@@ -272,3 +273,18 @@ def test_scenario_request_attribute():
     scenario = Scenario(1)
     assert hasattr(scenario, '_request')
     assert scenario._request is None
+
+
+def test_scenario_response_not_implemented():
+    """Test Scenario.response() raises NotImplementedError."""
+    scenario = Scenario(1)
+    with pytest.raises(NotImplementedError, match="Subclasses must implement response"):
+        scenario.response()
+
+
+def test_scenario_response_accepts_any_arguments():
+    """Test response() signature accepts *args and **kwargs."""
+    scenario = Scenario(1)
+    # This should not raise TypeError for argument signature
+    with pytest.raises(NotImplementedError):
+        scenario.response("arg1", "arg2", key1="value1", key2="value2")

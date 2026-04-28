@@ -133,3 +133,7 @@ class Scenario:
         """
         dim = self._data[param]
         self._data.validate(dim, raise_errors=True)
+
+    def response(self, *args: Any, **kwargs: Any) -> BaseResponse:
+        """Package results into BaseResponse. Subclasses must implement."""
+        raise NotImplementedError("Subclasses must implement response()")
