@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import Any, Dict, List
 from unittest.mock import MagicMock
 from dal import JsonHandler, DataHandler
-from or_scenario import LoadStep
+from or_scenario import LoadStep, Scenario
+from register import Register, Parameter
 
 
 def test_loadstep_init():
@@ -94,3 +95,12 @@ def test_loadstep_run():
     # Verify mapping was called with fetched data
     assert len(mapping_calls) == 1
     assert mapping_calls[0] == [{"id": 1, "value": 10}, {"id": 2, "value": 20}]
+
+
+def test_scenario_init():
+    """Test Scenario can be initialized with version_id."""
+    scenario = Scenario(1)
+    assert scenario._version_id == 1
+    assert scenario._algorithm is None
+    assert isinstance(scenario._data, Register)
+    assert scenario._load_steps == []

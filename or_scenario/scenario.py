@@ -1,8 +1,10 @@
 # or_scenario/scenario.py
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Tuple
 
 from dal import DataHandler
+from or_algo import Algorithm
+from register import Dimension, Parameter, Register
 
 
 class LoadStep:
@@ -42,8 +44,15 @@ class LoadStep:
 
 
 class Scenario:
-    """Template framework for Operations Research workflows.
+    """Base class for domain-specific OR scenarios."""
 
-    This class will be fully implemented in Task 5.
-    """
-    pass
+    _version_id: Hashable
+    _algorithm: Optional[Algorithm]
+    _data: Register[Parameter]
+    _load_steps: List[LoadStep]
+
+    def __init__(self, version_id: Hashable) -> None:
+        self._version_id = version_id
+        self._algorithm = None
+        self._data = Register[Parameter]()
+        self._load_steps = []
