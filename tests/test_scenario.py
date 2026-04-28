@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import Any, Dict, List
 from unittest.mock import MagicMock
 from dal import JsonHandler, DataHandler
-from or_scenario import LoadStep, Scenario
+from or_scenario import Scenario
+from or_scenario.scenario import LoadStep
 from register import Register, Parameter
 
 
@@ -184,3 +185,47 @@ def test_scenario_validate_default_param():
     scenario = Scenario(1)
     scenario._data[Id][(Index,)][(1,)] = 1
     scenario.validate()
+
+
+def test_scenario_integration():
+    """Integration test with domain-specific scenario loading JSON data."""
+    import tempfile
+    import json
+    from register import Dimension, Parameter
+
+    # Define domain-specific dimensions and parameters
+    Product = Dimension("Product", "产品", "PROD")
+    Region = Dimension("Region", "区域", "REG")
+    TestSalesVolume = Parameter(100, "test_sales", "test_sales", float)
+    TestPrice = Parameter(101, "test_price", "test_price", float)
+
+    # Create domain-specific scenario class
+    class TestScenario(Scenario):
+        def __init__(self, version_id, data_dir):
+            super().__init__(version_id)
+
+            def map_sales_data(records):
+                for r in records:
+                    self.set(TestSalesVolume, (Product, Region), (r["product_id"], r["region_id"]), r["volume"])
+                    self.set(TestPrice, (Product, Region), (r["product_id"], r["region_id"]), r["price"])
+
+            self._load_steps = [LoadStep(handler=JsonHandler(), mapping=map_sales_data, path=data_dir, table="sales.json", strict=True)]
+
+    # Create temporary directory with test data
+    with tempfile.TemporaryDirectory() as tmpdir:
+        data_path = Path(tmpdir)
+        test_data = [
+            {"product_id": 1, "region_id": 1, "volume": 100.0, "price": 10.0},
+            {"product_id": 1, "region_id": 2, "volume": 150.0, "price": 12.0}
+        ]
+
+        with open(data_path / "sales.json", "w") as f:
+            json.dump(test_data, f)
+
+        # Create scenario and load data
+        scenario = TestScenario("test-001", data_path)
+        scenario.load()
+
+        # Verify data was loaded correctly
+        assert scenario.get(TestSalesVolume, (Product, Region), (1, 1)) == 100.0
+        assert scenario.get(TestPrice, (Product, Region), (1, 2)) == 12.0
