@@ -351,3 +351,25 @@ def test_scenario_pydantic_integration():
     assert response.status == 200
     assert response.response.computed_value == 50
     assert response.response.metadata["multiplier"] == "5"
+
+
+def test_scenario_backward_compatibility():
+    """Test that scenarios without Pydantic still work."""
+    # Old-style scenario without Pydantic
+    class LegacyScenario(Scenario):
+        def __init__(self, version_id: int):
+            super().__init__(version_id)
+            self.custom_value = 100
+
+        def custom_method(self) -> int:
+            return self.custom_value * 2
+
+    # Create and use legacy scenario
+    scenario = LegacyScenario(42)
+    assert scenario._version_id == 42
+    assert scenario._request is None
+    assert scenario.custom_method() == 200
+
+    # response() should still raise NotImplementedError
+    with pytest.raises(NotImplementedError):
+        scenario.response()
