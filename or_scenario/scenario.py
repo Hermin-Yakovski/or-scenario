@@ -5,7 +5,7 @@ from datetime import datetime
 
 from dal import DataHandler
 from or_algo import Algorithm
-from register import Dimension, Id, Parameter, Register
+from register import Dimension, Id, Parameter, Register  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field
 
 
