@@ -6,8 +6,26 @@ from unittest.mock import MagicMock
 from datetime import datetime
 from dal import JsonHandler, DataHandler
 from or_scenario import Scenario
-from or_scenario.scenario import LoadStep, BaseRequest
+from or_scenario.scenario import LoadStep, BaseRequest, BaseResponse
 from register import Register
+from pydantic import BaseModel, Field
+
+
+# Pydantic models for integration testing
+class TestRequest(BaseRequest):
+    """Test request model for integration testing."""
+    value: int = Field(default=10, description="test value")
+
+
+class TestResult(BaseModel):
+    """Test result model."""
+    computed_value: int
+    metadata: Dict[str, str]
+
+
+class TestResponse(BaseResponse):
+    """Test response model with specific response type."""
+    response: TestResult
 
 
 def test_loadstep_init():
@@ -297,3 +315,39 @@ def test_public_api_exports():
     assert hasattr(or_scenario, 'BaseResponse')
     assert 'BaseRequest' in or_scenario.__all__
     assert 'BaseResponse' in or_scenario.__all__
+
+
+def test_scenario_pydantic_integration():
+    """Integration test: Scenario with Pydantic request/response."""
+    # Create a test scenario that uses Pydantic models
+    class TestScenario(Scenario):
+        def __init__(self, request: BaseRequest):
+            super().__init__(request.request_id)
+            self._request = request  # type: TestRequest
+
+        def response(self, multiplier: int = 1) -> BaseResponse:
+            """Return response with computed result."""
+            result = TestResult(
+                computed_value=self._request.value * multiplier,
+                metadata={"multiplier": str(multiplier)}
+            )
+            return TestResponse(
+                request_id=self._request.request_id,
+                status=200,
+                message="Test completed",
+                response=result
+            )
+
+    # Create request and scenario
+    request = TestRequest(value=10)
+    scenario = TestScenario(request)
+
+    # Get response
+    response = scenario.response(multiplier=5)
+
+    # Verify response structure
+    assert isinstance(response, TestResponse)
+    assert response.request_id == request.request_id
+    assert response.status == 200
+    assert response.response.computed_value == 50
+    assert response.response.metadata["multiplier"] == "5"
