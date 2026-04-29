@@ -101,7 +101,7 @@ try:
     scenario.exec_algorithm()
     response = scenario.response()
 except Exception as e:
-    response = DomainResponse(
+    response = BaseResponse(
         request_id=request.request_id,
         status=500,
         message=str(e)
