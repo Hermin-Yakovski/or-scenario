@@ -12,20 +12,20 @@ from pydantic import BaseModel, Field
 
 
 # Pydantic models for integration testing
-class TestRequest(BaseRequest):
-    """Test request model for integration testing."""
+class DemoRequest(BaseRequest):
+    """Demo request model for integration testing."""
     value: int = Field(default=10, description="test value")
 
 
-class TestResult(BaseModel):
-    """Test result model."""
+class DemoResult(BaseModel):
+    """Demo result model."""
     computed_value: int
     metadata: Dict[str, str]
 
 
-class TestResponse(BaseResponse):
-    """Test response model with specific response type."""
-    response: TestResult
+class DemoResponse(BaseResponse):
+    """Demo response model with specific response type."""
+    response: DemoResult
 
 
 def test_loadstep_init():
@@ -323,15 +323,15 @@ def test_scenario_pydantic_integration():
     class TestScenario(Scenario):
         def __init__(self, request: BaseRequest):
             super().__init__(request.request_id)
-            self._request = request  # type: TestRequest
+            self._request = request  # type: DemoRequest
 
         def response(self, multiplier: int = 1) -> BaseResponse:
             """Return response with computed result."""
-            result = TestResult(
+            result = DemoResult(
                 computed_value=self._request.value * multiplier,
                 metadata={"multiplier": str(multiplier)}
             )
-            return TestResponse(
+            return DemoResponse(
                 request_id=self._request.request_id,
                 status=200,
                 message="Test completed",
@@ -339,14 +339,14 @@ def test_scenario_pydantic_integration():
             )
 
     # Create request and scenario
-    request = TestRequest(value=10)
+    request = DemoRequest(value=10)
     scenario = TestScenario(request)
 
     # Get response
     response = scenario.response(multiplier=5)
 
     # Verify response structure
-    assert isinstance(response, TestResponse)
+    assert isinstance(response, DemoResponse)
     assert response.request_id == request.request_id
     assert response.status == 200
     assert response.response.computed_value == 50
