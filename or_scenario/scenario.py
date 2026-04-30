@@ -30,7 +30,6 @@ class Scenario:
     _version_id: Hashable
     _algorithm: Optional[Algorithm]
     _data: Register[Parameter]
-    _load_steps: List[LoadStep]
     _request: Optional[BaseRequest]
 
     def __init__(self, version_id: Hashable) -> None:
