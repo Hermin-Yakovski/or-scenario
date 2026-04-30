@@ -6,7 +6,11 @@ from unittest.mock import MagicMock
 from datetime import datetime
 from dal import JsonHandler, DataHandler
 from or_scenario import Scenario
-from or_scenario.scenario import LoadStep, BaseRequest, BaseResponse
+from or_scenario.scenario import BaseRequest, BaseResponse
+try:
+    from or_scenario.scenario import LoadStep
+except ImportError:
+    LoadStep = None  # LoadStep was removed in Task 1, will remove tests in Task 11
 from register import Register
 from pydantic import BaseModel, Field
 
@@ -125,6 +129,36 @@ def test_scenario_init():
     assert scenario._algorithm is None
     assert isinstance(scenario._data, Register)
     assert scenario._load_steps == []
+
+
+def test_decorator_transforms_method():
+    """Test that @_load_step decorator transforms method signature."""
+    from register import Dimension, Parameter
+
+    Product = Dimension("Product", "产品", "PROD")
+    TestVolume = Parameter(1, "test_volume", "test_volume", float)
+
+    class DecoratorTestScenario(Scenario):
+        def __init__(self, version_id):
+            super().__init__(version_id)
+            self.mapping_called = False
+            self.received_records = None
+
+        @Scenario._load_step(JsonHandler(), Path("test"), "data.json")
+        def load_data(self, records):
+            self.mapping_called = True
+            self.received_records = records
+
+    # Create scenario and verify decorated method exists
+    scenario = DecoratorTestScenario(1)
+    assert hasattr(scenario, 'load_data')
+    assert callable(scenario.load_data)
+    # Decorated method should be callable without records argument
+    import inspect
+    sig = inspect.signature(scenario.load_data)
+    # Wrapper accepts **kwargs, so signature should be flexible (only **kwargs, no 'records')
+    assert len(sig.parameters) == 1  # Only **kwargs parameter
+    assert 'kwargs' in sig.parameters
 
 
 def test_scenario_get():

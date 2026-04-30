@@ -1,4 +1,6 @@
 # or_scenario/scenario.py
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Tuple, Type, TypeVar
 from datetime import datetime
