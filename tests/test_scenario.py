@@ -283,7 +283,7 @@ def test_scenario_validate_default_param():
 
 
 def test_scenario_integration():
-    """Integration test with domain-specific scenario loading JSON data."""
+    """Integration test with domain-specific scenario using decorator pattern."""
     import tempfile
     import json
     from register import Dimension, Parameter
@@ -294,36 +294,40 @@ def test_scenario_integration():
     TestSalesVolume = Parameter(100, "test_sales", "test_sales", float)
     TestPrice = Parameter(101, "test_price", "test_price", float)
 
-    # Create domain-specific scenario class
-    class TestScenario(Scenario):
-        def __init__(self, version_id, data_dir):
-            super().__init__(version_id)
+    # Use current working directory for test (simpler approach)
+    test_data = [
+        {"product_id": 1, "region_id": 1, "volume": 100.0, "price": 10.0},
+        {"product_id": 1, "region_id": 2, "volume": 150.0, "price": 12.0}
+    ]
 
-            def map_sales_data(records):
+    # Create test data file
+    test_file = Path("test_sales.json")
+    try:
+        with open(test_file, "w") as f:
+            json.dump(test_data, f)
+
+        # Create domain-specific scenario class with decorator
+        class TestScenario(Scenario):
+            @Scenario._load_step(JsonHandler(), Path("."), "test_sales.json", strict=True)
+            def load_sales(self, records):
                 for r in records:
                     self.set(TestSalesVolume, (Product, Region), (r["product_id"], r["region_id"]), r["volume"])
                     self.set(TestPrice, (Product, Region), (r["product_id"], r["region_id"]), r["price"])
 
-            self._load_steps = [LoadStep(handler=JsonHandler(), mapping=map_sales_data, path=data_dir, table="sales.json", strict=True)]
-
-    # Create temporary directory with test data
-    with tempfile.TemporaryDirectory() as tmpdir:
-        data_path = Path(tmpdir)
-        test_data = [
-            {"product_id": 1, "region_id": 1, "volume": 100.0, "price": 10.0},
-            {"product_id": 1, "region_id": 2, "volume": 150.0, "price": 12.0}
-        ]
-
-        with open(data_path / "sales.json", "w") as f:
-            json.dump(test_data, f)
+            def load(self):
+                self.load_sales()
 
         # Create scenario and load data
-        scenario = TestScenario("test-001", data_path)
+        scenario = TestScenario("test-001")
         scenario.load()
 
         # Verify data was loaded correctly
         assert scenario.get(TestSalesVolume, (Product, Region), (1, 1)) == 100.0
         assert scenario.get(TestPrice, (Product, Region), (1, 2)) == 12.0
+    finally:
+        # Cleanup test file
+        if test_file.exists():
+            test_file.unlink()
 
 
 def test_baserequest_creation():
