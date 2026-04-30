@@ -36,7 +36,6 @@ class Scenario:
         self._version_id = version_id
         self._algorithm = None
         self._data = Register[Parameter]()
-        self._load_steps = []
         self._request = None
 
     def get(self, param: Parameter, dim: Tuple[Dimension, ...], ix: Tuple[int, ...]) -> Any:
