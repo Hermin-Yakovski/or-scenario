@@ -24,42 +24,6 @@ class BaseResponse(BaseModel):
     response: Any = Field(default=None, description="response of the data")
 
 
-class LoadStep:
-    """Encapsulates a single data loading operation."""
-
-    def __init__(
-        self,
-        handler: DataHandler,
-        mapping: Callable[[List[Dict[str, Any]]], None],
-        path: Path,
-        table: str,
-        cols: Optional[Iterable[str]] = None,
-        filter_: Optional[Callable[[Dict[str, Any]], bool]] = None,
-        limit: Optional[int] = None,
-        strict: bool = True,
-    ) -> None:
-        self.handler = handler
-        self.mapping = mapping
-        self.path = path
-        self.table = table
-        self.cols = cols
-        self.filter_ = filter_
-        self.limit = limit
-        self.strict = strict
-
-    def run(self) -> None:
-        """Fetch data via handler and call mapping function."""
-        records = self.handler.fetch(
-            path=self.path,
-            table=self.table,
-            cols=self.cols,
-            filter_=self.filter_,
-            limit=self.limit,
-            strict=self.strict
-        )
-        self.mapping(records)
-
-
 class Scenario:
     """Base class for domain-specific OR scenarios."""
 
