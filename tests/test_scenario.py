@@ -34,7 +34,8 @@ def test_scenario_init():
     assert scenario._version_id == 1
     assert scenario._algorithm is None
     assert isinstance(scenario._data, Register)
-    assert scenario._load_steps == []
+    # After refactor, _load_step is a static decorator method, not an instance attribute
+    assert callable(Scenario._load_step)
 
 
 def test_decorator_transforms_method():

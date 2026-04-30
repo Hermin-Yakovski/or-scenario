@@ -50,7 +50,7 @@ class Scenario:
         filter_: Optional[Callable[[Dict[str, Any]], bool]] = None,
         limit: Optional[int] = None,
         strict: bool = True
-    ) -> Callable[[Callable[[Scenario, List[Dict[str, Any]], ...], None]], Callable[..., None]]:
+    ) -> Callable[[Callable[[Scenario, List[Dict[str, Any]]], None]], Callable[..., None]]:
         """Decorator that wraps a method to auto-fetch data before calling mapping logic.
 
         The decorated method transforms from `mapping(self, records, **kwargs)` to
@@ -68,8 +68,8 @@ class Scenario:
         Returns:
             Decorator function that transforms mapping methods
         """
-        def decorator(mapping: Callable[[Scenario, List[Dict[str, Any]], ...], None]) -> Callable[..., None]:
-            def wrapper(self: Scenario, **kwargs) -> None:
+        def decorator(mapping: Callable[[Scenario, List[Dict[str, Any]]], None]) -> Callable[..., None]:
+            def wrapper(self: Scenario, **kwargs: Any) -> None:
                 try:
                     records = handler.fetch(
                         path=path,
@@ -132,9 +132,12 @@ class Scenario:
         self._algorithm.solve(self._data)
 
     def load(self) -> None:
-        """Execute all load steps to populate scenario data."""
-        for step in self._load_steps:
-            step.run()
+        """Execute all load steps to populate scenario data.
+
+        Subclasses should override this method to call their specific
+        decorated load methods in the desired order.
+        """
+        pass  # Subclasses should override this to call their decorated load methods
 
     def validate(self, param: Parameter = Id) -> None:
         """Validate scenario data.
