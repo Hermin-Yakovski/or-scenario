@@ -161,6 +161,44 @@ def test_decorator_transforms_method():
     assert 'kwargs' in sig.parameters
 
 
+def test_decorator_fetches_and_maps():
+    """Test decorator fetches data via handler and calls mapping function."""
+    from register import Dimension, Parameter
+    from unittest.mock import MagicMock
+
+    Product = Dimension("Product", "产品", "PROD")
+    TestVolume = Parameter(1, "test_volume", "test_volume", float)
+
+    # Create mock handler
+    mock_handler = MagicMock(spec=DataHandler)
+    test_data = [{"id": 1, "volume": 100.0}, {"id": 2, "volume": 200.0}]
+    mock_handler.fetch.return_value = test_data
+
+    class DecoratorTestScenario(Scenario):
+        @Scenario._load_step(mock_handler, Path("test"), "data.json")
+        def load_data(self, records):
+            for r in records:
+                self.set(TestVolume, (Product,), (r["id"],), r["volume"])
+
+    # Create scenario and load data
+    scenario = DecoratorTestScenario(1)
+    scenario.load_data()
+
+    # Verify handler.fetch was called with correct arguments
+    mock_handler.fetch.assert_called_once_with(
+        path=Path("test"),
+        table="data.json",
+        cols=None,
+        filter_=None,
+        limit=None,
+        strict=True
+    )
+
+    # Verify data was mapped correctly
+    assert scenario.get(TestVolume, (Product,), (1,)) == 100.0
+    assert scenario.get(TestVolume, (Product,), (2,)) == 200.0
+
+
 def test_scenario_get():
     """Test Scenario.get() retrieves values from _data."""
     from register import Dimension, Parameter
