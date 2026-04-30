@@ -38,6 +38,53 @@ class Scenario:
         self._data = Register[Parameter]()
         self._request = None
 
+    @staticmethod
+    def _load_step(
+        handler: DataHandler,
+        path: Path,
+        table: str,
+        *,
+        cols: Optional[Iterable[str]] = None,
+        filter_: Optional[Callable[[Dict[str, Any]], bool]] = None,
+        limit: Optional[int] = None,
+        strict: bool = True
+    ) -> Callable[[Callable[[Scenario, List[Dict[str, Any]], ...], None]], Callable[..., None]]:
+        """Decorator that wraps a method to auto-fetch data before calling mapping logic.
+
+        The decorated method transforms from `mapping(self, records, **kwargs)` to
+        `wrapper(self, **kwargs)` - the wrapper handles data fetching internally.
+
+        Args:
+            handler: DataHandler instance for fetching data
+            path: Path to data directory
+            table: Table/file name
+            cols: Optional column filter
+            filter_: Optional row filter function
+            limit: Optional max records to fetch
+            strict: If True, raise exceptions. If False, log and continue.
+
+        Returns:
+            Decorator function that transforms mapping methods
+        """
+        def decorator(mapping: Callable[[Scenario, List[Dict[str, Any]], ...], None]) -> Callable[..., None]:
+            def wrapper(self: Scenario, **kwargs) -> None:
+                try:
+                    records = handler.fetch(
+                        path=path,
+                        table=table,
+                        cols=cols,
+                        filter_=filter_,
+                        limit=limit,
+                        strict=strict
+                    )
+                    mapping(self, records, **kwargs)
+                except Exception:
+                    if strict:
+                        raise
+                    # TODO: Log error and continue
+            return wrapper
+        return decorator
+
     def get(self, param: Parameter, dim: Tuple[Dimension, ...], ix: Tuple[int, ...]) -> Any:
         """Get a value from the scenario data.
 
