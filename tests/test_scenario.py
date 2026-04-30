@@ -199,6 +199,26 @@ def test_decorator_fetches_and_maps():
     assert scenario.get(TestVolume, (Product,), (2,)) == 200.0
 
 
+def test_decorator_strict_propagates():
+    """Test decorator with strict=True propagates exceptions."""
+    from unittest.mock import MagicMock
+
+    # Create mock handler that raises error
+    mock_handler = MagicMock(spec=DataHandler)
+    mock_handler.fetch.side_effect = IOError("File not found")
+
+    class DecoratorTestScenario(Scenario):
+        @Scenario._load_step(mock_handler, Path("test"), "data.json", strict=True)
+        def load_data(self, records):
+            pass
+
+    scenario = DecoratorTestScenario(1)
+
+    # Should raise IOError
+    with pytest.raises(IOError, match="File not found"):
+        scenario.load_data()
+
+
 def test_scenario_get():
     """Test Scenario.get() retrieves values from _data."""
     from register import Dimension, Parameter
