@@ -219,6 +219,29 @@ def test_decorator_strict_propagates():
         scenario.load_data()
 
 
+def test_decorator_non_strict_continues():
+    """Test decorator with strict=False continues on error."""
+    from unittest.mock import MagicMock
+
+    # Create mock handler that raises error
+    mock_handler = MagicMock(spec=DataHandler)
+    mock_handler.fetch.side_effect = IOError("File not found")
+
+    class DecoratorTestScenario(Scenario):
+        error_caught = False
+
+        @Scenario._load_step(mock_handler, Path("test"), "data.json", strict=False)
+        def load_data(self, records):
+            pass
+
+    scenario = DecoratorTestScenario(1)
+
+    # Should NOT raise error
+    scenario.load_data()
+    # If we get here, strict=False worked
+    assert True
+
+
 def test_scenario_get():
     """Test Scenario.get() retrieves values from _data."""
     from register import Dimension, Parameter
