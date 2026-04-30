@@ -1,6 +1,6 @@
 # or_scenario/scenario.py
 from pathlib import Path
-from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Tuple, Type, TypeVar
 from datetime import datetime
 
 from dal import DataHandler
