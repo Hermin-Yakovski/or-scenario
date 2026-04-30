@@ -236,17 +236,33 @@ def test_scenario_exec_algorithm_not_set():
 
 
 def test_scenario_load():
-    """Test Scenario.load() executes all load steps in order."""
+    """Test that decorated load methods are called in order."""
+    from unittest.mock import MagicMock
+
     run_order = []
-    def make_step(name: str) -> LoadStep:
-        handler = MagicMock(spec=DataHandler)
-        handler.fetch.return_value = []
-        def mapping(records):
-            run_order.append(name)
-        return LoadStep(handler=handler, mapping=mapping, path=Path("test"), table=f"{name}.json")
-    scenario = Scenario(1)
-    scenario._load_steps = [make_step("step1"), make_step("step2")]
+
+    # Create mock handlers
+    handler1 = MagicMock(spec=DataHandler)
+    handler1.fetch.return_value = [{"id": 1}]
+    handler2 = MagicMock(spec=DataHandler)
+    handler2.fetch.return_value = [{"id": 2}]
+
+    class LoadTestScenario(Scenario):
+        @Scenario._load_step(handler1, Path("test"), "step1.json")
+        def load_step1(self, records):
+            run_order.append("step1")
+
+        @Scenario._load_step(handler2, Path("test"), "step2.json")
+        def load_step2(self, records):
+            run_order.append("step2")
+
+        def load(self):
+            self.load_step1()
+            self.load_step2()
+
+    scenario = LoadTestScenario(1)
     scenario.load()
+
     assert run_order == ["step1", "step2"]
 
 
