@@ -242,6 +242,44 @@ def test_decorator_non_strict_continues():
     assert True
 
 
+def test_decorator_kwargs_passthrough():
+    """Test decorator passes **kwargs to mapping function."""
+    from register import Dimension, Parameter
+
+    Product = Dimension("Product", "产品", "PROD")
+    TestVolume = Parameter(1, "test_volume", "test_volume", float)
+
+    # Create mock handler
+    mock_handler = MagicMock(spec=DataHandler)
+    mock_handler.fetch.return_value = [
+        {"id": 1, "volume": 100.0, "region": "US"},
+        {"id": 2, "volume": 200.0, "region": "EU"}
+    ]
+
+    class DecoratorTestScenario(Scenario):
+        @Scenario._load_step(mock_handler, Path("test"), "data.json")
+        def load_data(self, records, region_filter=None):
+            for r in records:
+                if region_filter and r["region"] not in region_filter:
+                    continue
+                self.set(TestVolume, (Product,), (r["id"],), r["volume"])
+
+    scenario = DecoratorTestScenario(1)
+
+    # Without filter - all data loaded
+    scenario.load_data()
+    assert scenario.get(TestVolume, (Product,), (1,)) == 100.0
+    assert scenario.get(TestVolume, (Product,), (2,)) == 200.0
+
+    # Clear and reload with filter
+    scenario._data = Register[Parameter]()
+    scenario.load_data(region_filter=["US"])
+    assert scenario.get(TestVolume, (Product,), (1,)) == 100.0
+    # ID 2 (EU) should not be loaded
+    with pytest.raises(KeyError):
+        scenario.get(TestVolume, (Product,), (2,))
+
+
 def test_scenario_get():
     """Test Scenario.get() retrieves values from _data."""
     from register import Dimension, Parameter
