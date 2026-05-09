@@ -78,12 +78,24 @@ class Scenario:
     _version_id: Hashable
     _algorithm: Optional[Algorithm]
     _data: Register[Parameter]
-    _load_steps: List[LoadStep]
 
-    # New: Optional request storage
-    _request: Optional[BaseRequest] = None
+    # Request storage (always set, either provided or default)
+    _request: BaseRequest
 
-    # New: Abstract response method
+    def __init__(self, request: Optional[BaseRequest] = None) -> None:
+        """Initialize scenario with a base request.
+
+        Args:
+            request: Optional BaseRequest containing scenario configuration.
+                    If None, a default BaseRequest with auto-generated request_id is created.
+        """
+        if request is None:
+            self._request = BaseRequest()
+        self._version_id = self._request.request_id
+        self._algorithm = None
+        self._data = Register[Parameter]()
+
+    # Abstract response method
     def response(self, *args, **kwargs) -> BaseResponse:
         """Package results into BaseResponse. Subclasses must implement."""
         raise NotImplementedError("Subclasses must implement response()")
