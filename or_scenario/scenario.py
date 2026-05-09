@@ -137,7 +137,7 @@ class Scenario:
         Subclasses should override this method to call their specific
         decorated load methods in the desired order.
         """
-        pass  # Subclasses should override this to call their decorated load methods
+        raise NotImplementedError("Subclasses must implement load()")
 
     def validate(self, param: Parameter = Id) -> None:
         """Validate scenario data.
