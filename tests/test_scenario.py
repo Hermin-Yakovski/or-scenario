@@ -49,6 +49,14 @@ def test_scenario_init_with_default_request():
     assert scenario._version_id == scenario._request.request_id
 
 
+def test_scenario_init_with_explicit_request():
+    """Test Scenario can be initialized with explicit BaseRequest."""
+    request = BaseRequest()
+    scenario = Scenario(request)
+    assert scenario._request is request  # Same object reference
+    assert scenario._version_id == request.request_id
+
+
 def test_decorator_transforms_method():
     """Test that @_load_step decorator transforms method signature."""
     from register import Dimension, Parameter
