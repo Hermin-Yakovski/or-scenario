@@ -34,11 +34,11 @@ class Scenario:
     _data: Register[Parameter]
     _request: Optional[BaseRequest]
 
-    def __init__(self, version_id: Hashable) -> None:
-        self._version_id = version_id
+    def __init__(self, request: Optional[BaseRequest] = None) -> None:
+        self._request = request if request is not None else BaseRequest()
+        self._version_id = self._request.request_id
         self._algorithm = None
         self._data = Register[Parameter]()
-        self._request = None
 
     @staticmethod
     def _load_step(

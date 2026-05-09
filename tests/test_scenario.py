@@ -38,6 +38,17 @@ def test_scenario_init():
     assert callable(Scenario._load_step)
 
 
+def test_scenario_init_with_default_request():
+    """Test Scenario can be initialized with default BaseRequest."""
+    scenario = Scenario()
+    assert scenario._request is not None
+    assert isinstance(scenario._request, BaseRequest)
+    assert scenario._request.request_id is not None
+    assert isinstance(scenario._request.request_id, int)
+    # _version_id should be extracted from request_id
+    assert scenario._version_id == scenario._request.request_id
+
+
 def test_decorator_transforms_method():
     """Test that @_load_step decorator transforms method signature."""
     from register import Dimension, Parameter
