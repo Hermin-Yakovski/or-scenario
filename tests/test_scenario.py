@@ -401,6 +401,13 @@ def test_scenario_response_not_implemented():
         scenario.response()
 
 
+def test_scenario_load_not_implemented():
+    """Test Scenario.load() raises NotImplementedError."""
+    scenario = Scenario()
+    with pytest.raises(NotImplementedError, match="Subclasses must implement load"):
+        scenario.load()
+
+
 def test_scenario_response_accepts_any_arguments():
     """Test response() signature accepts *args and **kwargs."""
     scenario = Scenario()
