@@ -29,9 +29,9 @@ class DemoResponse(BaseResponse):
 
 
 def test_scenario_init():
-    """Test Scenario can be initialized with version_id."""
-    scenario = Scenario(1)
-    assert scenario._version_id == 1
+    """Test Scenario can be initialized."""
+    scenario = Scenario()
+    assert scenario._version_id == scenario._request.request_id
     assert scenario._algorithm is None
     assert isinstance(scenario._data, Register)
     # After refactor, _load_step is a static decorator method, not an instance attribute
@@ -60,8 +60,8 @@ def test_scenario_init_with_explicit_request():
 def test_decorator_transforms_method():
     """Test that @_load_step decorator transforms method signature."""
     class DecoratorTestScenario(Scenario):
-        def __init__(self, version_id):
-            super().__init__(version_id)
+        def __init__(self):
+            super().__init__()
             self.mapping_called = False
             self.received_records = None
 
@@ -71,7 +71,7 @@ def test_decorator_transforms_method():
             self.received_records = records
 
     # Create scenario and verify decorated method exists
-    scenario = DecoratorTestScenario(1)
+    scenario = DecoratorTestScenario()
     assert hasattr(scenario, 'load_data')
     assert callable(scenario.load_data)
     # Decorated method should be callable without records argument
@@ -102,7 +102,7 @@ def test_decorator_fetches_and_maps():
                 self.set(TestVolume, (Product,), (r["id"],), r["volume"])
 
     # Create scenario and load data
-    scenario = DecoratorTestScenario(1)
+    scenario = DecoratorTestScenario()
     scenario.load_data()
 
     # Verify handler.fetch was called with correct arguments
@@ -133,7 +133,7 @@ def test_decorator_strict_propagates():
         def load_data(self, records):
             pass
 
-    scenario = DecoratorTestScenario(1)
+    scenario = DecoratorTestScenario()
 
     # Should raise IOError
     with pytest.raises(IOError, match="File not found"):
@@ -155,7 +155,7 @@ def test_decorator_non_strict_continues():
         def load_data(self, records):
             pass
 
-    scenario = DecoratorTestScenario(1)
+    scenario = DecoratorTestScenario()
 
     # Should NOT raise error
     scenario.load_data()
@@ -185,7 +185,7 @@ def test_decorator_kwargs_passthrough():
                     continue
                 self.set(TestVolume, (Product,), (r["id"],), r["volume"])
 
-    scenario = DecoratorTestScenario(1)
+    scenario = DecoratorTestScenario()
 
     # Without filter - all data loaded
     scenario.load_data()
@@ -206,7 +206,7 @@ def test_scenario_get():
     from register import Dimension, Parameter
     Product = Dimension("Product", "产品", "PROD")
     SalesVolume = Parameter(1, "sales_volume", "销量", float)
-    scenario = Scenario(1)
+    scenario = Scenario()
     scenario._data[SalesVolume][(Product,)][(1,)] = 100.0
     result = scenario.get(SalesVolume, (Product,), (1,))
     assert result == 100.0
@@ -217,7 +217,7 @@ def test_scenario_set():
     from register import Dimension, Parameter
     Product = Dimension("Product", "产品", "PROD")
     SalesVolume = Parameter(1, "sales_volume", "销量", float)
-    scenario = Scenario(1)
+    scenario = Scenario()
     scenario.set(SalesVolume, (Product,), (1,), 150.0)
     result = scenario.get(SalesVolume, (Product,), (1,))
     assert result == 150.0
@@ -226,7 +226,7 @@ def test_scenario_set():
 def test_scenario_set_algorithm():
     """Test Scenario.set_algorithm() creates algorithm instance."""
     from or_algo import Algorithm
-    scenario = Scenario(1)
+    scenario = Scenario()
     scenario.set_algorithm(Algorithm)
     assert scenario._algorithm is not None
     assert isinstance(scenario._algorithm, Algorithm)
@@ -235,7 +235,7 @@ def test_scenario_set_algorithm():
 def test_scenario_exec_algorithm():
     """Test Scenario.exec_algorithm() calls algorithm.solve()."""
     from or_algo import Algorithm
-    scenario = Scenario(1)
+    scenario = Scenario()
     mock_algo = MagicMock(spec=Algorithm)
     scenario._algorithm = mock_algo
     scenario.exec_algorithm()
@@ -244,7 +244,7 @@ def test_scenario_exec_algorithm():
 
 def test_scenario_exec_algorithm_not_set():
     """Test Scenario.exec_algorithm() raises error when algorithm not set."""
-    scenario = Scenario(1)
+    scenario = Scenario()
     import pytest
     with pytest.raises(RuntimeError, match="Algorithm not set"):
         scenario.exec_algorithm()
@@ -275,7 +275,7 @@ def test_scenario_load():
             self.load_step1()
             self.load_step2()
 
-    scenario = LoadTestScenario(1)
+    scenario = LoadTestScenario()
     scenario.load()
 
     assert run_order == ["step1", "step2"]
@@ -284,7 +284,7 @@ def test_scenario_load():
 def test_scenario_validate():
     """Test Scenario.validate() validates data with default parameter."""
     from register import Id, Index
-    scenario = Scenario(1)
+    scenario = Scenario()
     scenario._data[Id][(Index,)][(1,)] = 1
     scenario.validate()
 
@@ -292,7 +292,7 @@ def test_scenario_validate():
 def test_scenario_validate_default_param():
     """Test Scenario.validate() with explicit default parameter."""
     from register import Id, Index
-    scenario = Scenario(1)
+    scenario = Scenario()
     scenario._data[Id][(Index,)][(1,)] = 1
     scenario.validate()
 
@@ -332,7 +332,7 @@ def test_scenario_integration():
                 self.load_sales()
 
         # Create scenario and load data
-        scenario = TestScenario("test-001")
+        scenario = TestScenario()
         scenario.load()
 
         # Verify data was loaded correctly
@@ -381,33 +381,29 @@ def test_baseresponse_with_response_field():
 
 def test_scenario_request_attribute():
     """Test Scenario has _request attribute."""
-    # When initialized with version_id (legacy pattern), _request is None
-    scenario = Scenario(1)
+    # When initialized without arguments, _request is auto-created
+    scenario = Scenario()
     assert hasattr(scenario, '_request')
-    assert scenario._request is None
+    assert scenario._request is not None
+    assert isinstance(scenario._request, BaseRequest)
 
-    # When initialized with BaseRequest (new pattern), _request is set
+    # When initialized with BaseRequest (explicit pattern), _request is set
     request = BaseRequest()
     scenario2 = Scenario(request)
     assert scenario2._request is request
     assert scenario2._version_id == request.request_id
 
-    # When initialized without arguments, _request is auto-created
-    scenario3 = Scenario()
-    assert scenario3._request is not None
-    assert isinstance(scenario3._request, BaseRequest)
-
 
 def test_scenario_response_not_implemented():
     """Test Scenario.response() raises NotImplementedError."""
-    scenario = Scenario(1)
+    scenario = Scenario()
     with pytest.raises(NotImplementedError, match="Subclasses must implement response"):
         scenario.response()
 
 
 def test_scenario_response_accepts_any_arguments():
     """Test response() signature accepts *args and **kwargs."""
-    scenario = Scenario(1)
+    scenario = Scenario()
     # This should not raise TypeError for argument signature
     with pytest.raises(NotImplementedError):
         scenario.response("arg1", "arg2", key1="value1", key2="value2")
@@ -427,8 +423,8 @@ def test_scenario_pydantic_integration():
     # Create a test scenario that uses Pydantic models
     class TestScenario(Scenario):
         def __init__(self, request: BaseRequest):
-            super().__init__(request.request_id)
-            self._request = request  # type: DemoRequest
+            super().__init__(request)
+            # self._request is already set by parent, preserving DemoRequest type
 
         def response(self, multiplier: int = 1) -> BaseResponse:
             """Return response with computed result."""
@@ -459,20 +455,20 @@ def test_scenario_pydantic_integration():
 
 
 def test_scenario_backward_compatibility():
-    """Test that scenarios without Pydantic still work."""
-    # Old-style scenario without Pydantic
-    class LegacyScenario(Scenario):
-        def __init__(self, version_id: int):
-            super().__init__(version_id)
+    """Test that scenarios work with default BaseRequest."""
+    # Scenario without custom __init__ - uses default BaseRequest
+    class SimpleScenario(Scenario):
+        def __init__(self):
+            super().__init__()
             self.custom_value = 100
 
         def custom_method(self) -> int:
             return self.custom_value * 2
 
-    # Create and use legacy scenario
-    scenario = LegacyScenario(42)
-    assert scenario._version_id == 42
-    assert scenario._request is None
+    # Create and use simple scenario
+    scenario = SimpleScenario()
+    assert scenario._version_id == scenario._request.request_id
+    assert scenario._request is not None
     assert scenario.custom_method() == 200
 
     # response() should still raise NotImplementedError
