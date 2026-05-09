@@ -34,16 +34,13 @@ class MyScenario(Scenario):
     def __init__(self, version_id):
         super().__init__(version_id)
 
-        def map_data(records):
-            for r in records:
-                self.set(SalesVolume, (Product,), (r["product_id"],), r["volume"])
+    @Scenario._load_step(JsonHandler(), Path("data/run-001"), "sales.json")
+    def load_sales(self, records):
+        for r in records:
+            self.set(SalesVolume, (Product,), (r["product_id"],), r["volume"])
 
-        self._load_steps = [LoadStep(
-            handler=JsonHandler(),
-            mapping=map_data,
-            path=Path("data") / str(version_id),
-            table="sales.json"
-        )]
+    def load(self):
+        self.load_sales()
 
 scenario = MyScenario("run-001")
 scenario.load()
@@ -76,8 +73,15 @@ class DomainResponse(BaseResponse):
 class DomainScenario(Scenario):
     def __init__(self, request: BaseRequest):
         self._request = request  # type: DomainRequest
-        super().__init__(request.request_id)
-        self._load_steps = self._build_load_steps()
+        super().__init__(request)
+
+    @Scenario._load_step(JsonHandler(), Path("data/run-001"), "sales.json")
+    def load_sales(self, records):
+        # Map data to Register
+        pass
+
+    def load(self):
+        self.load_sales()
 
     def response(self, include_debug: bool = False) -> BaseResponse:
         """Package results into response."""

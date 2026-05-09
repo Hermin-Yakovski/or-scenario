@@ -1,7 +1,7 @@
 # tests/test_scenario.py
 import pytest
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Dict
 from unittest.mock import MagicMock
 from datetime import datetime
 from dal import JsonHandler, DataHandler
@@ -59,11 +59,6 @@ def test_scenario_init_with_explicit_request():
 
 def test_decorator_transforms_method():
     """Test that @_load_step decorator transforms method signature."""
-    from register import Dimension, Parameter
-
-    Product = Dimension("Product", "产品", "PROD")
-    TestVolume = Parameter(1, "test_volume", "test_volume", float)
-
     class DecoratorTestScenario(Scenario):
         def __init__(self, version_id):
             super().__init__(version_id)
@@ -304,7 +299,6 @@ def test_scenario_validate_default_param():
 
 def test_scenario_integration():
     """Integration test with domain-specific scenario using decorator pattern."""
-    import tempfile
     import json
     from register import Dimension, Parameter
 
@@ -386,10 +380,22 @@ def test_baseresponse_with_response_field():
 
 
 def test_scenario_request_attribute():
-    """Test Scenario has _request attribute initialized to None."""
+    """Test Scenario has _request attribute."""
+    # When initialized with version_id (legacy pattern), _request is None
     scenario = Scenario(1)
     assert hasattr(scenario, '_request')
     assert scenario._request is None
+
+    # When initialized with BaseRequest (new pattern), _request is set
+    request = BaseRequest()
+    scenario2 = Scenario(request)
+    assert scenario2._request is request
+    assert scenario2._version_id == request.request_id
+
+    # When initialized without arguments, _request is auto-created
+    scenario3 = Scenario()
+    assert scenario3._request is not None
+    assert isinstance(scenario3._request, BaseRequest)
 
 
 def test_scenario_response_not_implemented():

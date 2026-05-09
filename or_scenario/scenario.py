@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Tuple, Type, TypeVar
+from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Tuple, Type, Union
 from datetime import datetime
 
 from dal import DataHandler
@@ -34,9 +34,16 @@ class Scenario:
     _data: Register[Parameter]
     _request: Optional[BaseRequest]
 
-    def __init__(self, request: Optional[BaseRequest] = None) -> None:
-        self._request = request if request is not None else BaseRequest()
-        self._version_id = self._request.request_id
+    def __init__(self, request_or_version_id: Union[BaseRequest, Hashable, None] = None) -> None:
+        if request_or_version_id is None:
+            self._request = BaseRequest()
+            self._version_id = self._request.request_id
+        elif isinstance(request_or_version_id, BaseRequest):
+            self._request = request_or_version_id
+            self._version_id = self._request.request_id
+        else:
+            self._request = None
+            self._version_id = request_or_version_id
         self._algorithm = None
         self._data = Register[Parameter]()
 
