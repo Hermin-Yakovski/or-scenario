@@ -146,3 +146,18 @@ class Scenario:
     def response(self, *args: Any, **kwargs: Any) -> BaseResponse:
         """Package results into BaseResponse. Subclasses must implement."""
         raise NotImplementedError("Subclasses must implement response()")
+
+    def _get_sol_table_name(self, dimension: Tuple[Dimension, ...]) -> str:
+        """Generate sol table name from dimension tuple.
+
+        Table name follows convention: sol_{dim1}_{dim2}...
+        Dimensions are sorted alphabetically for consistency.
+
+        Args:
+            dimension: Tuple of Dimension objects
+
+        Returns:
+            Sol table name (e.g., "sol_product_region")
+        """
+        sorted_dims = sorted(dimension, key=lambda d: d.name.lower())
+        return f"sol_{'_'.join(d.name.lower() for d in sorted_dims)}"
