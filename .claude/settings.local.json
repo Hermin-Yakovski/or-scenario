@@ -17,7 +17,17 @@
       "Bash(pytest *)",
       "Bash(mypy *)",
       "Bash(ruff check *)",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(git merge *)",
+      "Bash(git worktree *)",
+      "Bash(git stash *)",
+      "Skill(superpowers:writing-plans)",
+      "Skill(superpowers:subagent-driven-development)",
+      "Skill(superpowers:brainstorming)",
+      "Bash(pip list *)",
+      "Read(//d/github/sqlalchemy_demo/.claude/worktrees/omni_orm/**)",
+      "Bash(dir \"D:\\\\github\\\\sqlalchemy_demo\\\\.claude\\\\worktrees\\\\omni_orm\")",
+      "Skill(superpowers:requesting-code-review)"
     ]
   }
 }
