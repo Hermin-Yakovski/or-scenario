@@ -13,15 +13,6 @@ from pydantic import BaseModel, Field
 from .schema import BaseRequest, BaseResponse
 
 
-class BaseResponse(BaseModel):
-    """Base response with common fields."""
-    request_id: int = Field(..., description="identity of the data")
-    status: int = Field(..., description="status of the service")
-    message: str = Field(default="Default message", description="message of the service")
-    timestamp: datetime = Field(default_factory=datetime.now, description="timestamp of the data")
-    response: Any = Field(default=None, description="response of the data")
-
-
 class Scenario:
     """Base class for domain-specific OR scenarios."""
 
