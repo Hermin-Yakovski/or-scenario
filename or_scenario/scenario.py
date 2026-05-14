@@ -10,6 +10,8 @@ from or_algo import Algorithm
 from register import Dimension, Id, Parameter, Register  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field
 
+from .schema import BaseRequest, BaseResponse
+
 
 class BaseRequest(BaseModel):
     """Base request with common fields."""
