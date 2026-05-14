@@ -13,6 +13,7 @@ register = "^0.1.0"
 or-algo = "^0.2.0"
 data-access-layer = "^0.1.0"
 pydantic = "^2.0"
+omni-orm = "^0.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"
