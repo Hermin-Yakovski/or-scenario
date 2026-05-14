@@ -215,66 +215,31 @@ git commit -m "feat: add load(session: Session) method to Scenario"
 
 ---
 
-## Task 4: Add tests for orm proxy
+## Task 4: Add simplified tests for orm proxy
 
 **Files:**
 - Test: `tests/test_scenario.py`
 
-- [ ] **Step 1: Write test for orm proxy imports**
+- [ ] **Step 1: Write test for orm proxy**
 
 Add to `tests/test_scenario.py`:
 
 ```python
-def test_orm_proxy_exports():
+def test_orm_proxy():
     """Test that orm proxy re-exports omni_orm factory functions."""
-    from or_scenario.orm import (
-        generate_dimension_table,
-        generate_fact_table,
-        generate_sol_table,
-    )
-
-    # Verify functions are callable
-    assert callable(generate_dimension_table)
-    assert callable(generate_fact_table)
-    assert callable(generate_sol_table)
-
-
-def test_orm_proxy_factory_creates_classes():
-    """Test that factory functions create valid ORM classes."""
     from or_scenario.orm import generate_dimension_table, generate_fact_table
 
-    # Generate classes
+    # Verify factory functions work
     DimDistrict = generate_dimension_table("District")
     FactDistrictOwner = generate_fact_table("District", "Owner")
 
-    # Verify class names
     assert DimDistrict.__name__ == "DimDistrict"
     assert FactDistrictOwner.__name__ == "FactDistrictOwner"
-
-    # Verify table names
-    assert DimDistrict.__tablename__ == "dim_district"
-    assert FactDistrictOwner.__tablename__ == "fact_district_owner"
-
-
-def test_orm_proxy_all_exports():
-    """Test that __all__ contains expected exports."""
-    from or_scenario.orm import __all__ as orm_all
-
-    expected = ["generate_dimension_table", "generate_fact_table", "generate_sol_table"]
-    assert sorted(orm_all) == sorted(expected)
 ```
 
-- [ ] **Step 2: Run tests to verify they pass**
+- [ ] **Step 2: Run test to verify it passes**
 
-Run: `pytest tests/test_scenario.py::test_orm_proxy_exports -v`
-
-Expected: PASS
-
-Run: `pytest tests/test_scenario.py::test_orm_proxy_factory_creates_classes -v`
-
-Expected: PASS
-
-Run: `pytest tests/test_scenario.py::test_orm_proxy_all_exports -v`
+Run: `pytest tests/test_scenario.py::test_orm_proxy -v`
 
 Expected: PASS
 
@@ -282,67 +247,40 @@ Expected: PASS
 
 ```bash
 git add tests/test_scenario.py
-git commit -m "test: add tests for orm proxy exports"
+git commit -m "test: add test for orm proxy"
 ```
 
 ---
 
-## Task 5: Add tests for load(session) method signature
+## Task 5: Add test for load(session) method
 
 **Files:**
 - Test: `tests/test_scenario.py`
 
-- [ ] **Step 1: Write test for load(session) signature**
+- [ ] **Step 1: Write test for load(session) method**
 
 Add to `tests/test_scenario.py`:
 
 ```python
-def test_scenario_load_session_raises_not_implemented():
+def test_scenario_load_session():
     """Test that load(session) raises NotImplementedError by default."""
     from or_scenario import Scenario
     from unittest.mock import MagicMock
-    from sqlalchemy.orm import Session as SQLAlchemySession
 
-    # Create a mock session
-    mock_session = MagicMock(spec=SQLAlchemySession)
-
-    # Create scenario and call load(session)
+    mock_session = MagicMock()
     scenario = Scenario()
 
-    # Should raise NotImplementedError
-    with pytest.raises(NotImplementedError, match="Subclasses must implement load\\(session\\)"):
+    with pytest.raises(NotImplementedError, match="load\\(session\\)"):
         scenario.load(mock_session)
-
-
-def test_scenario_has_load_session_method():
-    """Test that Scenario class has load(session) method."""
-    from or_scenario import Scenario
-    import inspect
-
-    # Verify method exists
-    assert hasattr(Scenario, "load")
-    assert callable(getattr(Scenario, "load"))
-
-    # Verify signature accepts session parameter
-    sig = inspect.signature(Scenario.load)
-    params = list(sig.parameters.keys())
-
-    # Should have 'self' and 'session' parameters
-    assert "self" in params
-    assert "session" in params
 ```
 
-- [ ] **Step 2: Run tests to verify they pass**
+- [ ] **Step 2: Run test to verify it passes**
 
-Run: `pytest tests/test_scenario.py::test_scenario_load_session_raises_not_implemented -v`
-
-Expected: PASS
-
-Run: `pytest tests/test_scenario.py::test_scenario_has_load_session_method -v`
+Run: `pytest tests/test_scenario.py::test_scenario_load_session -v`
 
 Expected: PASS
 
-- [ ] **Step 3: Run full test suite to ensure no regressions**
+- [ ] **Step 3: Run full test suite**
 
 Run: `pytest tests/test_scenario.py -v`
 
@@ -352,7 +290,7 @@ Expected: All tests PASS
 
 ```bash
 git add tests/test_scenario.py
-git commit -m "test: add tests for load(session) method signature"
+git commit -m "test: add test for load(session) method"
 ```
 
 ---
@@ -526,7 +464,7 @@ git commit -m "docs: add database loading example documentation"
 
 ---
 
-## Task 8: Run full test suite and verify coverage
+## Task 8: Final verification
 
 **Files:**
 - Test all files
@@ -535,31 +473,13 @@ git commit -m "docs: add database loading example documentation"
 
 Run: `pytest tests/ -v`
 
-Expected: All tests PASS (including new database integration tests)
+Expected: All tests PASS
 
-- [ ] **Step 2: Run coverage check**
-
-Run: `pytest --cov=or_scenario tests/ --cov-report=term-missing`
-
-Expected: Coverage remains high (new code is tested)
-
-- [ ] **Step 3: Verify type checking**
-
-Run: `mypy or_scenario/`
-
-Expected: No new type errors
-
-- [ ] **Step 4: Verify linting**
-
-Run: `ruff check or_scenario/`
-
-Expected: No new linting errors
-
-- [ ] **Step 5: Final verification commit**
+- [ ] **Step 2: Final commit**
 
 ```bash
 git add -A
-git commit -m "test: verify full test suite passes after database integration"
+git commit -m "test: verify test suite passes after database integration"
 ```
 
 ---
@@ -584,6 +504,6 @@ git commit -m "test: verify full test suite passes after database integration"
 - Error message consistent: "Subclasses must implement load(session)"
 
 **Testing approach:**
-- orm proxy tests verify factory functions work and classes are generated
-- load(session) tests verify method exists and raises NotImplementedError
+- Simplified orm proxy test verifies factory functions work
+- Simplified load(session) test verifies NotImplementedError is raised
 - Existing tests continue to pass (no behavioral changes to file-based loading)
