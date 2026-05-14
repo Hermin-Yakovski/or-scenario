@@ -162,7 +162,7 @@ if TYPE_CHECKING:
 
 The imports section should now include the TYPE_CHECKING import and conditional Session import.
 
-- [ ] **Step 2: Add load(session) method before existing load() method**
+- [ ] **Step 2: Modify existing load() method to accept optional session parameter**
 
 Find the existing `load()` method at line 121-127:
 ```python
@@ -175,24 +175,23 @@ def load(self) -> None:
     raise NotImplementedError("Subclasses must implement load()")
 ```
 
-Add the new `load(session)` method BEFORE the existing `load()` method:
-
+Replace with:
 ```python
-def load(self, session: "Session") -> None:
-    """Load scenario data from database.
-
-    Caller manages transaction boundaries.
+def load(self, session: Optional["Session"] = None) -> None:
+    """Load scenario data from database or files.
 
     Args:
-        session: SQLAlchemy session with active transaction
+        session: Optional SQLAlchemy session with active transaction.
+                 If provided, subclasses should load from database.
+                 If None, subclasses should load from files.
 
     Raises:
         NotImplementedError: Subclass must override
     """
-    raise NotImplementedError("Subclasses must implement load(session)")
+    raise NotImplementedError("Subclasses must implement load()")
 ```
 
-The file should now have both `load(session)` and the original `load()` methods.
+The method now accepts an optional session parameter for database loading.
 
 - [ ] **Step 3: Verify syntax**
 
