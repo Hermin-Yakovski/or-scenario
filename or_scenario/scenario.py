@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Tuple, Type, TYPE_CHECKING
 from datetime import datetime
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
 
 from dal import DataHandler
 from or_algo import Algorithm
@@ -117,6 +120,19 @@ class Scenario:
         if self._algorithm is None:
             raise RuntimeError("Algorithm not set. Call set_algorithm() first.")
         self._algorithm.solve(self._data)
+
+    def load(self, session: "Session") -> None:
+        """Load scenario data from database.
+
+        Caller manages transaction boundaries.
+
+        Args:
+            session: SQLAlchemy session with active transaction
+
+        Raises:
+            NotImplementedError: Subclass must override
+        """
+        raise NotImplementedError("Subclasses must implement load(session)")
 
     def load(self) -> None:
         """Execute all load steps to populate scenario data.
