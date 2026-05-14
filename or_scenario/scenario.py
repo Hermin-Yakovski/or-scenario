@@ -121,24 +121,16 @@ class Scenario:
             raise RuntimeError("Algorithm not set. Call set_algorithm() first.")
         self._algorithm.solve(self._data)
 
-    def load(self, session: "Session") -> None:
-        """Load scenario data from database.
-
-        Caller manages transaction boundaries.
+    def load(self, session: Optional["Session"] = None) -> None:
+        """Load scenario data from database or files.
 
         Args:
-            session: SQLAlchemy session with active transaction
+            session: Optional SQLAlchemy session with active transaction.
+                     If provided, subclasses should load from database.
+                     If None, subclasses should load from files.
 
         Raises:
             NotImplementedError: Subclass must override
-        """
-        raise NotImplementedError("Subclasses must implement load(session)")
-
-    def load(self) -> None:
-        """Execute all load steps to populate scenario data.
-
-        Subclasses should override this method to call their specific
-        decorated load methods in the desired order.
         """
         raise NotImplementedError("Subclasses must implement load()")
 
