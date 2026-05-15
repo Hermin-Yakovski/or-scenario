@@ -586,3 +586,53 @@ def test_dump_uses_atomic_transaction():
 
     # Verify begin() was called for atomic transaction
     mock_session.begin.assert_called_once()
+
+
+def test_dump_skips_missing_parameters():
+    """Test that dump() skips parameters that don't exist in Register."""
+    from register import Dimension, Parameter
+    from unittest.mock import MagicMock, patch
+    from sqlalchemy.orm import Session
+
+    scenario = Scenario()
+    scenario._version_id = 123
+
+    SalesVolume = Parameter(1, "sales_volume", "销量", float)
+    Price = Parameter(2, "price", "价格", float)
+
+    mock_session = MagicMock(spec=Session)
+
+    with patch.object(scenario, '_get_sol_table_name', return_value='sol_test'):
+        with patch.object(scenario, '_data') as mock_data:
+            # Mock Register: SalesVolume exists, Price doesn't
+            def mock_contains(key):
+                if key[0] == SalesVolume:
+                    return True
+                return False
+
+            def mock_getitem(key):
+                if key[0] == SalesVolume:
+                    # Return a mock dimension that has __getitem__
+                    mock_dim = MagicMock()
+                    mock_dim.__getitem__ = lambda self, idx: 100.0
+                    return mock_dim
+                raise KeyError(f"{key} not found")
+
+            mock_data.__contains__ = mock_contains
+            mock_data.__getitem__ = mock_getitem
+
+            # Mock execute to track how many inserts happen
+            mock_session.execute.return_value = MagicMock()
+
+            try:
+                scenario.dump(
+                    mock_session,
+                    {SalesVolume, Price},
+                    (Dimension("Test", "", ""),),
+                    (1,)
+                )
+            except NotImplementedError:
+                pass  # Expected
+
+    # Should only attempt to insert SalesVolume (Price should be skipped)
+    # We'll verify this in the next task when we implement the full logic

@@ -161,7 +161,13 @@ class Scenario:
         sol_table_name = self._get_sol_table_name(dimension)
 
         with session.begin():
-            raise NotImplementedError("dump() inner logic not yet implemented")
+            for param in params:
+                # Skip if parameter doesn't exist in Register at this dimension/index
+                if (param, dimension) not in self._data:
+                    continue
+
+                # TODO: Implement insert logic
+                raise NotImplementedError("dump() insert logic not yet implemented")
 
     def validate(self, param: Parameter = Id) -> None:
         """Validate scenario data.
