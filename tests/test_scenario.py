@@ -671,3 +671,52 @@ def test_dump_deletes_existing_version_records():
 
     # Verify execute was called (for delete operation)
     assert mock_session.execute.called
+
+
+def test_dump_inserts_records():
+    """Test that dump() inserts records from Register."""
+    from register import Dimension, Parameter
+    from sqlalchemy import text
+    from unittest.mock import MagicMock, patch
+    from sqlalchemy.orm import Session
+
+    scenario = Scenario()
+    scenario._version_id = 123
+
+    SalesVolume = Parameter(1, "sales_volume", "销量", float)
+
+    mock_session = MagicMock(spec=Session)
+
+    with patch.object(scenario, '_get_sol_table_name', return_value='sol_test'):
+        with patch.object(scenario, '_data') as mock_data:
+            # Mock Register with value
+            mock_dim_data = MagicMock()
+            mock_dim_data.__getitem__ = lambda self, idx: 500.0
+
+            def mock_contains(key):
+                return key[0] == SalesVolume
+
+            def mock_getitem(key):
+                if key[0] == SalesVolume:
+                    return mock_dim_data
+                raise KeyError(key)
+
+            mock_data.__contains__ = mock_contains
+            mock_data.__getitem__ = mock_getitem
+
+            try:
+                scenario.dump(
+                    mock_session,
+                    {SalesVolume},
+                    (Dimension("Test", "", ""),),
+                    (1,)
+                )
+            except NotImplementedError:
+                pass
+
+    # Verify execute was called for insert
+    assert mock_session.execute.called
+    # Get the call arguments
+    call_args = mock_session.execute.call_args_list
+    # Should have delete and insert calls
+    assert len(call_args) >= 2

@@ -166,13 +166,37 @@ class Scenario:
             delete_stmt = text(f"DELETE FROM {sol_table_name} WHERE version_id = :version_id")
             session.execute(delete_stmt, {"version_id": self._version_id})
 
+            # Build column names and values for insert
+            dimension_columns = [f"{dim.name.lower()}_id" for dim in dimension]
+            columns = ["parameter_id", "version_id", "quantity"] + dimension_columns
+
             for param in params:
                 # Skip if parameter doesn't exist in Register at this dimension/index
                 if (param, dimension) not in self._data:
                     continue
 
-                # TODO: Implement insert logic
-                raise NotImplementedError("dump() insert logic not yet implemented")
+                # Get value from Register
+                value = self._data[param][dimension][index]
+
+                # Build insert statement
+                placeholders = ", ".join([f":{col}" for col in columns])
+                insert_stmt = text(
+                    f"INSERT INTO {sol_table_name} ({', '.join(columns)}) "
+                    f"VALUES ({placeholders})"
+                )
+
+                # Build parameters dict
+                insert_params = {
+                    "parameter_id": param.id,
+                    "version_id": self._version_id,
+                    "quantity": value
+                }
+
+                # Add dimension index values
+                for i, dim_col in enumerate(dimension_columns):
+                    insert_params[dim_col] = index[i]
+
+                session.execute(insert_stmt, insert_params)
 
     def validate(self, param: Parameter = Id) -> None:
         """Validate scenario data.
