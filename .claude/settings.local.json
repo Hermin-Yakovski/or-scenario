@@ -27,7 +27,8 @@
       "Bash(pip list *)",
       "Read(//d/github/sqlalchemy_demo/.claude/worktrees/omni_orm/**)",
       "Bash(dir \"D:\\\\github\\\\sqlalchemy_demo\\\\.claude\\\\worktrees\\\\omni_orm\")",
-      "Skill(superpowers:requesting-code-review)"
+      "Skill(superpowers:requesting-code-review)",
+      "Bash(git restore *)"
     ]
   }
 }
