@@ -10,8 +10,15 @@ from omni_orm import (
     generate_sol_table,
 )
 
+Parameter = generate_dimension_table("Parameter")
+Version = generate_dimension_table("Version")
+Snapshot = generate_dimension_table("Snapshot")
+
 __all__ = [
     "generate_dimension_table",
     "generate_fact_table",
     "generate_sol_table",
+    "Parameter",
+    "Version",
+    "Snapshot",
 ]
