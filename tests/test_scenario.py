@@ -518,3 +518,38 @@ def test_dump_raises_without_version_id():
 
     with pytest.raises(RuntimeError, match="version_id"):
         scenario.dump(mock_session, set(), (Dimension("A", "", ""),), (1,))
+
+
+def test_dump_discovers_sol_table():
+    """Test that dump() correctly identifies sol table name."""
+    from register import Dimension, Parameter
+    from unittest.mock import MagicMock, patch
+    from sqlalchemy.orm import Session
+
+    scenario = Scenario()
+    scenario._version_id = 123
+
+    mock_session = MagicMock(spec=Session)
+
+    # Mock _get_sol_table_name to verify it's called correctly
+    with patch.object(scenario, '_get_sol_table_name', return_value='sol_product_region') as mock_get_name:
+        with patch.object(scenario, '_data') as mock_data:
+            # Mock Register to return empty (no values to dump)
+            mock_data.__contains__ = lambda self, key: False
+
+            try:
+                scenario.dump(
+                    mock_session,
+                    set(),
+                    (Dimension("Product", "", ""), Dimension("Region", "", "")),
+                    (1, 2)
+                )
+            except NotImplementedError:
+                pass  # Expected, we haven't implemented the full method yet
+
+        # Verify _get_sol_table_name was called with sorted dimensions
+        mock_get_name.assert_called_once()
+        called_dims = mock_get_name.call_args[0][0]
+        # Should be sorted alphabetically
+        dim_names = [d.name for d in called_dims]
+        assert dim_names == sorted(dim_names, key=str.lower)

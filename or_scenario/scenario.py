@@ -158,7 +158,10 @@ class Scenario:
         if self._version_id is None:
             raise RuntimeError("version_id must be set before calling dump()")
 
-        raise NotImplementedError("Subclasses must implement dump()")
+        # Discover sol table name
+        sol_table_name = self._get_sol_table_name(dimension)
+
+        raise NotImplementedError("dump() not yet fully implemented")
 
     def validate(self, param: Parameter = Id) -> None:
         """Validate scenario data.
