@@ -636,3 +636,38 @@ def test_dump_skips_missing_parameters():
 
     # Should only attempt to insert SalesVolume (Price should be skipped)
     # We'll verify this in the next task when we implement the full logic
+
+
+def test_dump_deletes_existing_version_records():
+    """Test that dump() deletes existing records with same version_id."""
+    from register import Dimension, Parameter
+    from sqlalchemy import delete, Table, MetaData, Column, Integer
+    from unittest.mock import MagicMock, patch, call
+    from sqlalchemy.orm import Session
+
+    scenario = Scenario()
+    scenario._version_id = 123
+
+    mock_session = MagicMock(spec=Session)
+
+    # Mock the sol table
+    mock_table = MagicMock()
+    mock_table.delete.return_value = MagicMock(where=MagicMock(return_value=MagicMock()))
+
+    with patch.object(scenario, '_get_sol_table_name', return_value='sol_test'):
+        with patch('sqlalchemy.select', return_value=MagicMock()):
+            with patch.object(scenario, '_data') as mock_data:
+                mock_data.__contains__ = lambda self, key: False
+
+                try:
+                    scenario.dump(
+                        mock_session,
+                        set(),
+                        (Dimension("Test", "", ""),),
+                        (1,)
+                    )
+                except NotImplementedError:
+                    pass
+
+    # Verify execute was called (for delete operation)
+    assert mock_session.execute.called

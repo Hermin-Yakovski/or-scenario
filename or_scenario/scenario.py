@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 from dal import DataHandler
 from or_algo import Algorithm
 from register import Dimension, Id, Parameter, Register  # type: ignore[import-untyped]
+from sqlalchemy import text
 # pydantic imports removed - now in schema.py
 
 from .schema import BaseRequest, BaseResponse
@@ -161,6 +162,10 @@ class Scenario:
         sol_table_name = self._get_sol_table_name(dimension)
 
         with session.begin():
+            # Delete existing records with this version_id
+            delete_stmt = text(f"DELETE FROM {sol_table_name} WHERE version_id = :version_id")
+            session.execute(delete_stmt, {"version_id": self._version_id})
+
             for param in params:
                 # Skip if parameter doesn't exist in Register at this dimension/index
                 if (param, dimension) not in self._data:
