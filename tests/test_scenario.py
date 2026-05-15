@@ -553,3 +553,36 @@ def test_dump_discovers_sol_table():
         # Should be sorted alphabetically
         dim_names = [d.name for d in called_dims]
         assert dim_names == sorted(dim_names, key=str.lower)
+
+
+def test_dump_uses_atomic_transaction():
+    """Test that dump() uses atomic transaction."""
+    from register import Dimension, Parameter
+    from unittest.mock import MagicMock, patch
+    from sqlalchemy.orm import Session
+
+    scenario = Scenario()
+    scenario._version_id = 123
+
+    mock_session = MagicMock(spec=Session)
+    mock_transaction = MagicMock()
+    mock_session.begin.return_value.__enter__ = MagicMock(return_value=mock_transaction)
+    mock_session.begin.return_value.__exit__ = MagicMock(return_value=False)
+
+    with patch.object(scenario, '_get_sol_table_name', return_value='sol_test'):
+        with patch.object(scenario, '_data') as mock_data:
+            # Mock Register to return empty (no values to dump)
+            mock_data.__contains__ = lambda self, key: False
+
+            try:
+                scenario.dump(
+                    mock_session,
+                    set(),
+                    (Dimension("Test", "", ""),),
+                    (1,)
+                )
+            except NotImplementedError:
+                pass  # Expected
+
+    # Verify begin() was called for atomic transaction
+    mock_session.begin.assert_called_once()
