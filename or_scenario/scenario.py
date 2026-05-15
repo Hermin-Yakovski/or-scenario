@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Tuple, Type, TYPE_CHECKING
+from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Set, Tuple, Type, TYPE_CHECKING
 from datetime import datetime
 
 if TYPE_CHECKING:
@@ -133,6 +133,29 @@ class Scenario:
             NotImplementedError: Subclass must override
         """
         raise NotImplementedError("Subclasses must implement load()")
+
+    def dump(self,
+              session: "Session",
+              params: Set[Parameter],
+              dimension: Tuple[Dimension, ...],
+              index: Tuple[int, ...]) -> None:
+        """Dump parameters to sol table.
+
+        Atomic transaction that:
+        1. Deletes all existing records with version_id = self._version_id
+        2. Inserts new records from Register for given params/dimension/index
+        3. Skips params that don't exist at the specified index
+
+        Args:
+            session: SQLAlchemy session
+            params: Set of parameters to dump
+            dimension: Dimension tuple for sol table identification
+            index: Index tuple for data location
+
+        Raises:
+            RuntimeError: If version_id is not set
+        """
+        raise NotImplementedError("Subclasses must implement dump()")
 
     def validate(self, param: Parameter = Id) -> None:
         """Validate scenario data.

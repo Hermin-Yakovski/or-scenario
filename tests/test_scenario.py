@@ -481,3 +481,24 @@ def test_scenario_backward_compatibility():
     # response() should still raise NotImplementedError
     with pytest.raises(NotImplementedError):
         scenario.response()
+
+
+def test_dump_method_exists():
+    """Test that dump() method exists and has correct signature."""
+    from register import Dimension, Parameter
+    import inspect
+
+    scenario = Scenario()
+
+    # Verify method exists
+    assert hasattr(scenario, "dump")
+    assert callable(scenario.dump)
+
+    # Verify signature
+    sig = inspect.signature(scenario.dump)
+    params = list(sig.parameters.keys())
+    assert "self" in params
+    assert "session" in params
+    assert "params" in params
+    assert "dimension" in params
+    assert "index" in params
