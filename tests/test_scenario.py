@@ -502,3 +502,19 @@ def test_dump_method_exists():
     assert "params" in params
     assert "dimension" in params
     assert "index" in params
+
+
+def test_dump_raises_without_version_id():
+    """Test that dump() raises RuntimeError when version_id is not set."""
+    from register import Dimension, Parameter
+    from sqlalchemy.orm import Session
+    from unittest.mock import MagicMock
+
+    scenario = Scenario()
+    # Don't set version_id
+    scenario._version_id = None
+
+    mock_session = MagicMock(spec=Session)
+
+    with pytest.raises(RuntimeError, match="version_id"):
+        scenario.dump(mock_session, set(), (Dimension("A", "", ""),), (1,))

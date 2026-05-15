@@ -155,6 +155,9 @@ class Scenario:
         Raises:
             RuntimeError: If version_id is not set
         """
+        if self._version_id is None:
+            raise RuntimeError("version_id must be set before calling dump()")
+
         raise NotImplementedError("Subclasses must implement dump()")
 
     def validate(self, param: Parameter = Id) -> None:
