@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "or-scenario"
-version = "0.2.0"
+version = "0.3.0"
 description = "Template framework for Operations Research scenarios"
 authors = ["yehemin <yehemin@example.com>"]
 readme = "README.md"
