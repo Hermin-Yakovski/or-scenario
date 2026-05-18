@@ -155,9 +155,13 @@ class Scenario:
 
         Raises:
             RuntimeError: If version_id is not set
+            ValueError: If index length doesn't match dimension length
         """
         if self._version_id is None:
             raise RuntimeError("version_id must be set before calling dump()")
+
+        if len(index) != len(dimension):
+            raise ValueError(f"Index length {len(index)} doesn't match dimension length {len(dimension)}")
 
         sol_table_name = self._get_sol_table_name(dimension)
 
@@ -170,33 +174,39 @@ class Scenario:
             dimension_columns = [f"{dim.name.lower()}_id" for dim in dimension]
             columns = ["parameter_id", "version_id", "quantity"] + dimension_columns
 
+            # Collect all records to insert (batch insert for performance)
+            records_to_insert = []
+
             for param in params:
-                # Skip if parameter doesn't exist in Register at this dimension/index
-                if (param, dimension) not in self._data:
+                # Skip if parameter doesn't exist in Register
+                if param not in self._data:
+                    continue
+                # Skip if dimension doesn't exist for this parameter
+                if dimension not in self._data[param]:
+                    continue
+                # Skip if index doesn't exist for this dimension
+                if index not in self._data[param][dimension]:
                     continue
 
                 # Get value from Register
                 value = self._data[param][dimension][index]
 
-                # Build insert statement
+                records_to_insert.append({
+                    "parameter_id": param.id,
+                    "version_id": self._version_id,
+                    "quantity": value,
+                    **{dim_col: index[i] for i, dim_col in enumerate(dimension_columns)}
+                })
+
+            # Batch insert all records
+            if records_to_insert:
                 placeholders = ", ".join([f":{col}" for col in columns])
                 insert_stmt = text(
                     f"INSERT INTO {sol_table_name} ({', '.join(columns)}) "
                     f"VALUES ({placeholders})"
                 )
-
-                # Build parameters dict
-                insert_params = {
-                    "parameter_id": param.id,
-                    "version_id": self._version_id,
-                    "quantity": value
-                }
-
-                # Add dimension index values
-                for i, dim_col in enumerate(dimension_columns):
-                    insert_params[dim_col] = index[i]
-
-                session.execute(insert_stmt, insert_params)
+                for record in records_to_insert:
+                    session.execute(insert_stmt, record)
 
     def validate(self, param: Parameter = Id) -> None:
         """Validate scenario data.
@@ -211,6 +221,17 @@ class Scenario:
         """Package results into BaseResponse. Subclasses must implement."""
         raise NotImplementedError("Subclasses must implement response()")
 
+    def _validate_sql_identifier(self, identifier: str) -> bool:
+        """Validate that a string is a safe SQL identifier.
+
+        Args:
+            identifier: String to validate
+
+        Returns:
+            True if identifier is safe (alphanumeric and underscores only)
+        """
+        return bool(identifier) and all(c.isalnum() or c == '_' for c in identifier)
+
     def _get_sol_table_name(self, dimension: Tuple[Dimension, ...]) -> str:
         """Generate sol table name from dimension tuple.
 
@@ -222,6 +243,12 @@ class Scenario:
 
         Returns:
             Sol table name (e.g., "sol_product_region")
+
+        Raises:
+            ValueError: If dimension name contains unsafe characters
         """
         sorted_dims = sorted(dimension, key=lambda d: d.name.lower())
-        return f"sol_{'_'.join(d.name.lower() for d in sorted_dims)}"
+        table_name = f"sol_{'_'.join(d.name.lower() for d in sorted_dims)}"
+        if not self._validate_sql_identifier(table_name):
+            raise ValueError(f"Invalid table name '{table_name}': dimension names must be alphanumeric")
+        return table_name
