@@ -12,8 +12,10 @@ from dal import DataHandler
 from or_algo import Algorithm
 from register import Dimension, Id, Parameter, Register  # type: ignore[import-untyped]
 from sqlalchemy import text
+from sqlalchemy.orm import Session
 # pydantic imports removed - now in schema.py
 
+from .orm import generate_sol_table
 from .schema import BaseRequest, BaseResponse
 
 
@@ -166,15 +168,14 @@ class Scenario:
         sol_table_name = self._get_sol_table_name(dimension)
 
         with session.begin():
-            # Delete existing records with this version_id
-            delete_stmt = text(f"DELETE FROM {sol_table_name} WHERE version_id = :version_id")
-            session.execute(delete_stmt, {"version_id": self._version_id})
+            # Generate the Sol table class dynamically
+            dimension_names = [dim.name for dim in dimension]
+            SolTable = generate_sol_table(*dimension_names)
 
-            # Build column names and values for insert
-            dimension_columns = [f"{dim.name.lower()}_id" for dim in dimension]
-            columns = ["parameter_id", "version_id", "quantity"] + dimension_columns
+            # Delete existing records with this version_id using ORM
+            session.query(SolTable).filter(SolTable.version_id == self._version_id).delete()
 
-            # Collect all records to insert (batch insert for performance)
+            # Collect all records to insert
             records_to_insert = []
 
             for param in params:
@@ -191,22 +192,21 @@ class Scenario:
                 # Get value from Register
                 value = self._data[param][dimension][index]
 
-                records_to_insert.append({
+                # Create ORM instance with dimension IDs
+                record_kwargs = {
                     "parameter_id": param.id,
                     "version_id": self._version_id,
                     "quantity": value,
-                    **{dim_col: index[i] for i, dim_col in enumerate(dimension_columns)}
-                })
+                }
+                # Add dimension IDs
+                for i, dim in enumerate(dimension):
+                    record_kwargs[f"{dim.name.lower()}_id"] = index[i]
 
-            # Batch insert all records
+                records_to_insert.append(SolTable(**record_kwargs))
+
+            # Batch insert all records using ORM
             if records_to_insert:
-                placeholders = ", ".join([f":{col}" for col in columns])
-                insert_stmt = text(
-                    f"INSERT INTO {sol_table_name} ({', '.join(columns)}) "
-                    f"VALUES ({placeholders})"
-                )
-                for record in records_to_insert:
-                    session.execute(insert_stmt, record)
+                session.add_all(records_to_insert)
 
     def validate(self, param: Parameter = Id) -> None:
         """Validate scenario data.

@@ -633,17 +633,15 @@ def test_dump_skips_missing_parameters():
         )
 
     # Should only insert SalesVolume (Price should be skipped)
-    # Verify execute was called for both delete and insert
-    assert mock_session.execute.called
-    call_args = mock_session.execute.call_args_list
-    assert len(call_args) >= 2  # delete + insert
+    # Verify ORM methods were called (query for delete, add_all for insert)
+    assert mock_session.query.called
+    assert mock_session.add_all.called
 
 
 def test_dump_deletes_existing_version_records():
     """Test that dump() deletes existing records with same version_id."""
     from register import Dimension, Parameter
-    from sqlalchemy import delete, Table, MetaData, Column, Integer
-    from unittest.mock import MagicMock, patch, call
+    from unittest.mock import MagicMock, patch
     from sqlalchemy.orm import Session
 
     scenario = Scenario()
@@ -651,27 +649,26 @@ def test_dump_deletes_existing_version_records():
 
     mock_session = MagicMock(spec=Session)
 
-    # Mock the sol table
-    mock_table = MagicMock()
-    mock_table.delete.return_value = MagicMock(where=MagicMock(return_value=MagicMock()))
+    # Mock the query chain for delete
+    mock_query = MagicMock()
+    mock_query.filter.return_value.delete.return_value = 0
+    mock_session.query.return_value = mock_query
 
     with patch.object(scenario, '_get_sol_table_name', return_value='sol_test'):
-        with patch('sqlalchemy.select', return_value=MagicMock()):
-            with patch.object(scenario, '_data') as mock_data:
-                mock_data.__contains__ = lambda self, key: False
+        with patch.object(scenario, '_data') as mock_data:
+            mock_data.__contains__ = lambda self, key: False
 
-                try:
-                    scenario.dump(
-                        mock_session,
-                        set(),
-                        (Dimension("Test", "", ""),),
-                        (1,)
-                    )
-                except NotImplementedError:
-                    pass
+            scenario.dump(
+                mock_session,
+                set(),
+                (Dimension("Test", "", ""),),
+                (1,)
+            )
 
-    # Verify execute was called (for delete operation)
-    assert mock_session.execute.called
+    # Verify query was called for delete operation
+    assert mock_session.query.called
+    mock_query.filter.assert_called_once()
+    mock_query.filter.return_value.delete.assert_called_once()
 
 
 def test_dump_inserts_records():
@@ -691,6 +688,11 @@ def test_dump_inserts_records():
 
     mock_session = MagicMock(spec=Session)
 
+    # Mock the query chain for delete
+    mock_query = MagicMock()
+    mock_query.filter.return_value.delete.return_value = 0
+    mock_session.query.return_value = mock_query
+
     with patch.object(scenario, '_get_sol_table_name', return_value='sol_test'):
         scenario.dump(
             mock_session,
@@ -699,9 +701,7 @@ def test_dump_inserts_records():
             (1,)
         )
 
-    # Verify execute was called for insert
-    assert mock_session.execute.called
-    # Get the call arguments
-    call_args = mock_session.execute.call_args_list
-    # Should have delete and insert calls
-    assert len(call_args) >= 2
+    # Verify add_all was called for insert
+    assert mock_session.add_all.called
+    # Verify query was called for delete
+    assert mock_session.query.called
