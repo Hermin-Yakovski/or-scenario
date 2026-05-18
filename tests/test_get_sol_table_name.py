@@ -9,54 +9,71 @@ def test_get_sol_table_name():
     # Import Dimension from register module
     from register import Dimension
 
-    # Mock the or_algo module to avoid ortools dependency
-    mock_or_algo = types.ModuleType("or_algo")
+    # Save the original or_algo module if it exists
+    original_or_algo = sys.modules.get("or_algo")
 
-    class MockAlgorithm:
-        def solve(self, data):
-            pass
+    try:
+        # Mock the or_algo module to avoid ortools dependency
+        mock_or_algo = types.ModuleType("or_algo")
 
-    mock_or_algo.Algorithm = MockAlgorithm
-    sys.modules["or_algo"] = mock_or_algo
+        class MockAlgorithm:
+            def solve(self, data):
+                pass
 
-    # Clear any cached or_scenario modules to force reload
-    modules_to_clear = [k for k in list(sys.modules.keys()) if k.startswith("or_scenario")]
-    for module in modules_to_clear:
-        del sys.modules[module]
+        mock_or_algo.Algorithm = MockAlgorithm
+        sys.modules["or_algo"] = mock_or_algo
 
-    # Import Scenario and BaseRequest from or_scenario
-    from or_scenario import Scenario, BaseRequest
+        # Clear any cached or_scenario modules to force reload
+        modules_to_clear = [k for k in list(sys.modules.keys()) if k.startswith("or_scenario")]
+        for module in modules_to_clear:
+            del sys.modules[module]
 
-    # Create scenario instance
-    scenario = Scenario(BaseRequest())
+        # Import Scenario and BaseRequest from or_scenario
+        from or_scenario import Scenario, BaseRequest
 
-    # Single dimension
-    result = scenario._get_sol_table_name((Dimension("A", "", ""),))
-    assert result == "sol_a", f"Expected 'sol_a', got '{result}'"
+        # Create scenario instance
+        scenario = Scenario(BaseRequest())
 
-    # Two dimensions - should be sorted alphabetically
-    result = scenario._get_sol_table_name((
-        Dimension("Zebra", "", ""),
-        Dimension("Apple", "", "")
-    ))
-    assert result == "sol_apple_zebra", f"Expected 'sol_apple_zebra', got '{result}'"
+        # Single dimension
+        result = scenario._get_sol_table_name((Dimension("A", "", ""),))
+        assert result == "sol_a", f"Expected 'sol_a', got '{result}'"
 
-    # Three dimensions
-    result = scenario._get_sol_table_name((
-        Dimension("C", "", ""),
-        Dimension("B", "", ""),
-        Dimension("A", "", "")
-    ))
-    assert result == "sol_a_b_c", f"Expected 'sol_a_b_c', got '{result}'"
+        # Two dimensions - should be sorted alphabetically
+        result = scenario._get_sol_table_name((
+            Dimension("Zebra", "", ""),
+            Dimension("Apple", "", "")
+        ))
+        assert result == "sol_apple_zebra", f"Expected 'sol_apple_zebra', got '{result}'"
 
-    # Test case sensitivity - should use lowercase
-    result = scenario._get_sol_table_name((
-        Dimension("Product", "", ""),
-        Dimension("Region", "", "")
-    ))
-    assert result == "sol_product_region", f"Expected 'sol_product_region', got '{result}'"
+        # Three dimensions
+        result = scenario._get_sol_table_name((
+            Dimension("C", "", ""),
+            Dimension("B", "", ""),
+            Dimension("A", "", "")
+        ))
+        assert result == "sol_a_b_c", f"Expected 'sol_a_b_c', got '{result}'"
 
-    print("All _get_sol_table_name tests passed!")
+        # Test case sensitivity - should use lowercase
+        result = scenario._get_sol_table_name((
+            Dimension("Product", "", ""),
+            Dimension("Region", "", "")
+        ))
+        assert result == "sol_product_region", f"Expected 'sol_product_region', got '{result}'"
+
+        print("All _get_sol_table_name tests passed!")
+    finally:
+        # Remove the mock module
+        sys.modules.pop("or_algo", None)
+
+        # Force import of the real or_algo module to replace the mock
+        import importlib
+        import or_algo
+        importlib.reload(or_algo)
+
+        # Clear any cached or_scenario modules to prevent test pollution
+        modules_to_clear = [k for k in list(sys.modules.keys()) if k.startswith("or_scenario")]
+        for module in modules_to_clear:
+            del sys.modules[module]
 
 
 if __name__ == "__main__":
