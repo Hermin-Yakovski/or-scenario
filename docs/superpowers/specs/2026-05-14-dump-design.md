@@ -1,32 +1,34 @@
 # dump() Method Design Specification
 
 **Date:** 2026-05-14
-**Status:** Draft
+**Status:** Implemented
 **Phase:** 3 (Database Persistence)
 **Version:** 0.3.0
+**Updated:** 2026-05-19
 
 ## Overview
 
-Add `dump()` method to `Scenario` class for persisting algorithm results from `Register[Parameter]` to database solution (sol) tables. Completes the OR workflow: load → solve → dump.
+Add `dump()` method to `Scenario` class for persisting algorithm results from `Register[Parameter]` to database solution (sol) or fact tables. Completes the OR workflow: load → solve → dump.
 
 ## Motivation
 
 - Enable persisting optimization results to database for audit and analysis
 - Support result sharing across scenarios and time periods
-- Provide transaction-safe, atomic result storage
+- Support both sol tables (version-based) and fact tables (snapshot-based)
+- Allow caller-controlled transaction boundaries for flexibility
 
 ## Scope
 
 **In Scope:**
-- Add `dump(session, params, dimension, index)` method to Scenario class
-- Atomic transaction: delete existing version_id records, insert new results
+- Add `dump(session, params, dimension, fact=False)` method to Scenario class
+- Delete existing version_id/snapshot_id records, insert new results
 - Skip parameters that don't exist in Register
-- Use convention-based sol table discovery
+- Use convention-based sol/fact table discovery
+- Caller controls transaction boundaries
 
 **Out of Scope:**
 - Async version (adump) - deferred to future phase
-- Complex filtering beyond single index tuple
-- Batch operations beyond Set[Parameter]
+- Complex filtering beyond parameter sets
 
 ## Design
 
@@ -38,26 +40,26 @@ from sqlalchemy.orm import Session
 from register import Dimension, Parameter
 
 class Scenario:
-    def dump(self, 
-             session: Session, 
-             params: Set[Parameter], 
-             dimension: Tuple[Dimension, ...], 
-             index: Tuple[int, ...]) -> None:
-        """Dump parameters to sol table.
-        
-        Atomic transaction that:
-        1. Deletes all existing records with version_id = self._version_id
-        2. Inserts new records from Register for given params/dimension/index
-        3. Skips params that don't exist at the specified index
-        
+    def dump(self,
+             session: Session,
+             params: Set[Parameter],
+             dimension: Tuple[Dimension, ...],
+             fact: bool = False) -> None:
+        """Dump parameters to sol or fact table.
+
+        Deletes all existing records with version_id/snapshot_id = self._version_id,
+        then inserts new records from Register for given params/dimension.
+        Iterates over all indexes for each parameter/dimension combination.
+        Skips params that don't exist in Register.
+
+        Caller is responsible for transaction management.
+
         Args:
             session: SQLAlchemy session
             params: Set of parameters to dump
-            dimension: Dimension tuple for sol table identification
-            index: Index tuple for data location
-            
-        Raises:
-            RuntimeError: If version_id is not set
+            dimension: Dimension tuple for table identification
+            fact: If True, dump to fact table using snapshot_id column.
+                  If False, dump to sol table using version_id column.
         """
 ```
 
@@ -80,33 +82,36 @@ def _get_sol_table_name(dimension: Tuple[Dimension, ...]) -> str:
 
 ### Transaction Flow
 
-1. **Begin transaction** - Open atomic transaction boundary
-2. **Delete existing** - Remove all records where `version_id = self._version_id`
-3. **Insert new** - For each param in `params`:
-   - Check if value exists in Register at `(dimension, index)`
-   - If exists, insert into sol table with:
-     - `version_id` = `self._version_id`
-     - `parameter_id` = from param
-     - `quantity` = value from Register
-     - `{dimension}_id` = from index tuple
-   - If not exists, skip (no error)
-4. **Commit transaction** - Atomic commit or rollback
+**Caller controls transaction boundaries.** Method does NOT manage transactions.
+
+Within the caller's transaction:
+
+1. **Delete existing** - Remove all records where `version_id/snapshot_id = self._version_id`
+2. **Insert new** - For each param in `params`:
+   - For each index in Register at `(param, dimension)`:
+     - Insert into sol/fact table with:
+       - `version_id` or `snapshot_id` = `self._version_id` (based on `fact` param)
+       - `parameter_id` = from param
+       - `quantity` = value from Register
+       - `{dimension}_id` = from index tuple
+   - If parameter/dimension doesn't exist, skip (no error)
 
 ### Versioning
 
 Uses `self._version_id` which is set during initialization from `BaseRequest.request_id`.
 
-**Raises:** `RuntimeError` if `self._version_id` is not set.
+**Column selection:**
+- When `fact=False`: uses `version_id` column (sol tables)
+- When `fact=True`: uses `snapshot_id` column (fact tables)
 
 ### Error Handling
 
 | Condition | Behavior |
 |-----------|----------|
-| Param value doesn't exist at index | Skip param (continue with others) |
-| Sol table doesn't exist | Propagate database error |
-| Version_id not set | Raise RuntimeError |
+| Param/dimension doesn't exist in Register | Skip param (continue with others) |
+| Sol/fact table doesn't exist | Propagate database error |
 | Database constraint violation | Propagate error |
-| Transaction fails | Rollback all changes |
+| Transaction failures | Caller handles rollback |
 
 ## Usage Example
 
@@ -137,20 +142,21 @@ SessionLocal = sessionmaker(bind=engine)
 
 scenario = SalesScenario()
 with SessionLocal() as session:
-    # Load data
-    scenario.load(session)
-    
-    # Solve
-    scenario.set_algorithm(MyOptimizer)
-    scenario.exec_algorithm()
-    
-    # Dump results
-    scenario.dump(
-        session, 
-        {SalesVolume}, 
-        (Product, Region), 
-        (1, 2)
-    )
+    with session.begin():  # Caller controls transaction
+        # Load data
+        scenario.load(session)
+
+        # Solve
+        scenario.set_algorithm(MyOptimizer)
+        scenario.exec_algorithm()
+
+        # Dump results to sol table (version_id column)
+        scenario.dump(
+            session,
+            {SalesVolume},
+            (Product, Region),
+            fact=False
+        )
 ```
 
 ## File Structure
@@ -186,18 +192,17 @@ with SessionLocal() as session:
 ## Testing
 
 **Test cases:**
-1. Dump single parameter at specific index
-2. Dump multiple parameters at same index
-3. Skip missing parameter (value doesn't exist in Register)
+1. Dump single parameter across all indexes
+2. Dump multiple parameters at same dimension
+3. Skip missing parameter (parameter doesn't exist in Register)
 4. Delete existing version_id records before insert
-5. Transaction rollback on error
-6. Version_id not set raises RuntimeError
-7. Sol table name generation (alphabetical sorting)
+5. Delete existing snapshot_id records when fact=True
+6. Sol table name generation (alphabetical sorting)
+7. Caller controls transaction boundaries
 
 ## Next Phase
 
 Phase 4 may include:
-- Async version: `adump(session, params, dimension, index)`
-- Batch operations: dump multiple index tuples
+- Async version: `adump(session, params, dimension, fact=False)`
 - Advanced filtering: dump by parameter value ranges
 - Upsert modes: configurable update/insert behavior

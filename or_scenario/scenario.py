@@ -15,7 +15,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 # pydantic imports removed - now in schema.py
 
-from .orm import generate_sol_table
+from .orm import generate_sol_table, generate_fact_table
 from .schema import BaseRequest, BaseResponse
 
 
@@ -138,75 +138,51 @@ class Scenario:
         raise NotImplementedError("Subclasses must implement load()")
 
     def dump(self,
-              session: "Session",
-              params: Set[Parameter],
-              dimension: Tuple[Dimension, ...],
-              index: Tuple[int, ...]) -> None:
-        """Dump parameters to sol table.
+        session: "Session",
+        params: Set[Parameter],
+        dimension: Tuple[Dimension, ...],
+        fact: bool = False,
+    ) -> None:
+        """Dump parameters to sol or fact table.
 
-        Atomic transaction that:
-        1. Deletes all existing records with version_id = self._version_id
-        2. Inserts new records from Register for given params/dimension/index
-        3. Skips params that don't exist at the specified index
+        Deletes all existing records with version_id/snapshot_id = self._version_id,
+        then inserts new records from Register for given params/dimension.
+        Skips params that don't exist in Register.
+
+        Caller is responsible for transaction management.
 
         Args:
             session: SQLAlchemy session
             params: Set of parameters to dump
-            dimension: Dimension tuple for sol table identification
-            index: Index tuple for data location
+            dimension: Dimension tuple for table identification
+            fact: If True, dump to fact table using snapshot_id column.
+                  If False, dump to sol table using version_id column.
 
-        Raises:
-            RuntimeError: If version_id is not set
-            ValueError: If index length doesn't match dimension length
         """
-        if self._version_id is None:
-            raise RuntimeError("version_id must be set before calling dump()")
+        identifier: str = 'snapshot_id' if fact else 'version_id'
 
-        if len(index) != len(dimension):
-            raise ValueError(f"Index length {len(index)} doesn't match dimension length {len(dimension)}")
+        # Generate the Sol table class dynamically
+        dimension_names = [dim.name for dim in dimension]
+        table =  generate_fact_table(*dimension_names) if fact else generate_sol_table(*dimension_names)
 
-        sol_table_name = self._get_sol_table_name(dimension)
+        # Delete existing records with this version_id using ORM
+        session.query(table).filter(getattr(table, identifier) == self._version_id).delete()
 
-        with session.begin():
-            # Generate the Sol table class dynamically
-            dimension_names = [dim.name for dim in dimension]
-            SolTable = generate_sol_table(*dimension_names)
-
-            # Delete existing records with this version_id using ORM
-            session.query(SolTable).filter(SolTable.version_id == self._version_id).delete()
-
-            # Collect all records to insert
-            records_to_insert = []
-
-            for param in params:
-                # Skip if parameter doesn't exist in Register
-                if param not in self._data:
-                    continue
-                # Skip if dimension doesn't exist for this parameter
-                if dimension not in self._data[param]:
-                    continue
-                # Skip if index doesn't exist for this dimension
-                if index not in self._data[param][dimension]:
-                    continue
-
-                # Get value from Register
-                value = self._data[param][dimension][index]
-
-                # Create ORM instance with dimension IDs
-                record_kwargs = {
+        # Collect all records to insert
+        records = []
+        for param in params:
+            for index in self._data.select(param, dimension):
+                row = {
                     "parameter_id": param.id,
-                    "version_id": self._version_id,
-                    "quantity": value,
+                    identifier: self._version_id,
+                    "quantity": self._data[param][dimension][index],
                 }
-                # Add dimension IDs
                 for i, dim in enumerate(dimension):
-                    record_kwargs[f"{dim.name.lower()}_id"] = index[i]
+                    row[f"{dim.name.lower()}_id"] = index[i]
+                records.append(table(**row))
 
-                records_to_insert.append(SolTable(**record_kwargs))
-
-            # Batch insert all records using ORM
-            if records_to_insert:
-                session.add_all(records_to_insert)
+        if records:
+            session.add_all(records)
 
     def validate(self, param: Parameter = Id) -> None:
         """Validate scenario data.

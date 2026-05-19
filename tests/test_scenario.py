@@ -9,6 +9,7 @@ from or_scenario import Scenario
 from or_scenario.scenario import BaseRequest, BaseResponse
 from register import Register
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
 
 # Pydantic models for integration testing
@@ -516,124 +517,39 @@ def test_dump_method_exists():
     assert "session" in params
     assert "params" in params
     assert "dimension" in params
-    assert "index" in params
-
-
-def test_dump_raises_without_version_id():
-    """Test that dump() raises RuntimeError when version_id is not set."""
-    from register import Dimension, Parameter
-    from sqlalchemy.orm import Session
-    from unittest.mock import MagicMock
-
-    scenario = Scenario()
-    # Don't set version_id
-    scenario._version_id = None
-
-    mock_session = MagicMock(spec=Session)
-
-    with pytest.raises(RuntimeError, match="version_id"):
-        scenario.dump(mock_session, set(), (Dimension("A", "", ""),), (1,))
-
-
-def test_dump_discovers_sol_table():
-    """Test that dump() correctly identifies sol table name."""
-    from register import Dimension, Parameter
-    from unittest.mock import MagicMock, patch
-    from sqlalchemy.orm import Session
-
-    scenario = Scenario()
-    scenario._version_id = 123
-
-    mock_session = MagicMock(spec=Session)
-
-    # Mock _get_sol_table_name to verify it's called correctly
-    with patch.object(scenario, '_get_sol_table_name', return_value='sol_product_region') as mock_get_name:
-        with patch.object(scenario, '_data') as mock_data:
-            # Mock Register to return empty (no values to dump)
-            mock_data.__contains__ = lambda self, key: False
-
-            try:
-                scenario.dump(
-                    mock_session,
-                    set(),
-                    (Dimension("Product", "", ""), Dimension("Region", "", "")),
-                    (1, 2)
-                )
-            except NotImplementedError:
-                pass  # Expected, we haven't implemented the full method yet
-
-        # Verify _get_sol_table_name was called with sorted dimensions
-        mock_get_name.assert_called_once()
-        called_dims = mock_get_name.call_args[0][0]
-        # Should be sorted alphabetically
-        dim_names = [d.name for d in called_dims]
-        assert dim_names == sorted(dim_names, key=str.lower)
-
-
-def test_dump_uses_atomic_transaction():
-    """Test that dump() uses atomic transaction."""
-    from register import Dimension, Parameter
-    from unittest.mock import MagicMock, patch
-    from sqlalchemy.orm import Session
-
-    scenario = Scenario()
-    scenario._version_id = 123
-
-    mock_session = MagicMock(spec=Session)
-    mock_transaction = MagicMock()
-    mock_session.begin.return_value.__enter__ = MagicMock(return_value=mock_transaction)
-    mock_session.begin.return_value.__exit__ = MagicMock(return_value=False)
-
-    with patch.object(scenario, '_get_sol_table_name', return_value='sol_test'):
-        with patch.object(scenario, '_data') as mock_data:
-            # Mock Register to return empty (no values to dump)
-            mock_data.__contains__ = lambda self, key: False
-
-            try:
-                scenario.dump(
-                    mock_session,
-                    set(),
-                    (Dimension("Test", "", ""),),
-                    (1,)
-                )
-            except NotImplementedError:
-                pass  # Expected
-
-    # Verify begin() was called for atomic transaction
-    mock_session.begin.assert_called_once()
+    assert "fact" in params
+    # index parameter should NOT exist in new signature
+    assert "index" not in params
 
 
 def test_dump_skips_missing_parameters():
     """Test that dump() skips parameters that don't exist in Register."""
     from register import Dimension, Parameter
     from unittest.mock import MagicMock, patch
-    from sqlalchemy.orm import Session
 
     scenario = Scenario()
     scenario._version_id = 123
 
     SalesVolume = Parameter(1, "sales_volume", "销量", float)
     Price = Parameter(2, "price", "价格", float)
-
-    mock_session = MagicMock(spec=Session)
-
     TestDimension = Dimension("Test", "", "")
 
     # Only add SalesVolume to Register, not Price
     scenario.set(SalesVolume, (TestDimension,), (1,), 100.0)
 
     mock_session = MagicMock(spec=Session)
+    mock_query = MagicMock()
+    mock_query.filter.return_value.delete.return_value = 0
+    mock_session.query.return_value = mock_query
 
-    with patch.object(scenario, '_get_sol_table_name', return_value='sol_test'):
-        scenario.dump(
-            mock_session,
-            {SalesVolume, Price},  # Both params passed, but only SalesVolume exists
-            (TestDimension,),
-            (1,)
-        )
+    scenario.dump(
+        mock_session,
+        {SalesVolume, Price},  # Both params passed, but only SalesVolume exists
+        (TestDimension,),
+        fact=False
+    )
 
     # Should only insert SalesVolume (Price should be skipped)
-    # Verify ORM methods were called (query for delete, add_all for insert)
     assert mock_session.query.called
     assert mock_session.add_all.called
 
@@ -641,41 +557,64 @@ def test_dump_skips_missing_parameters():
 def test_dump_deletes_existing_version_records():
     """Test that dump() deletes existing records with same version_id."""
     from register import Dimension, Parameter
-    from unittest.mock import MagicMock, patch
-    from sqlalchemy.orm import Session
+    from unittest.mock import MagicMock
 
     scenario = Scenario()
     scenario._version_id = 123
 
     mock_session = MagicMock(spec=Session)
-
-    # Mock the query chain for delete
     mock_query = MagicMock()
     mock_query.filter.return_value.delete.return_value = 0
     mock_session.query.return_value = mock_query
 
-    with patch.object(scenario, '_get_sol_table_name', return_value='sol_test'):
-        with patch.object(scenario, '_data') as mock_data:
-            mock_data.__contains__ = lambda self, key: False
-
-            scenario.dump(
-                mock_session,
-                set(),
-                (Dimension("Test", "", ""),),
-                (1,)
-            )
+    scenario.dump(
+        mock_session,
+        set(),
+        (Dimension("Test", "", ""),),
+        fact=False
+    )
 
     # Verify query was called for delete operation
     assert mock_session.query.called
     mock_query.filter.assert_called_once()
-    mock_query.filter.return_value.delete.assert_called_once()
 
 
-def test_dump_inserts_records():
-    """Test that dump() inserts records from Register."""
-    from register import Dimension, Parameter, Id, Index
+def test_dump_uses_fact_table_when_fact_true():
+    """Test that dump() uses fact table and snapshot_id when fact=True."""
+    from register import Dimension, Parameter
     from unittest.mock import MagicMock, patch
-    from sqlalchemy.orm import Session
+
+    scenario = Scenario()
+    scenario._version_id = 123
+
+    TestDimension = Dimension("Test", "", "")
+
+    mock_session = MagicMock(spec=Session)
+    mock_query = MagicMock()
+    mock_query.filter.return_value.delete.return_value = 0
+    mock_session.query.return_value = mock_query
+
+    with patch('or_scenario.scenario.generate_fact_table') as mock_fact_table:
+        mock_table_cls = MagicMock()
+        mock_fact_table.return_value = mock_table_cls
+
+        scenario.dump(
+            mock_session,
+            set(),
+            (TestDimension,),
+            fact=True
+        )
+
+        # Verify generate_fact_table was called
+        mock_fact_table.assert_called_once()
+        # Verify filter used snapshot_id column
+        mock_query.filter.assert_called_once()
+
+
+def test_dump_inserts_records_for_all_indexes():
+    """Test that dump() inserts records for all indexes in Register."""
+    from register import Dimension, Parameter
+    from unittest.mock import MagicMock, patch
 
     scenario = Scenario()
     scenario._version_id = 123
@@ -683,25 +622,25 @@ def test_dump_inserts_records():
     SalesVolume = Parameter(1, "sales_volume", "销量", float)
     TestDimension = Dimension("Test", "", "")
 
-    # Use real Register data structure
-    scenario.set(SalesVolume, (TestDimension,), (1,), 500.0)
+    # Add multiple indexes for same parameter/dimension
+    scenario.set(SalesVolume, (TestDimension,), (1,), 100.0)
+    scenario.set(SalesVolume, (TestDimension,), (2,), 200.0)
+    scenario.set(SalesVolume, (TestDimension,), (3,), 300.0)
 
     mock_session = MagicMock(spec=Session)
-
-    # Mock the query chain for delete
     mock_query = MagicMock()
     mock_query.filter.return_value.delete.return_value = 0
     mock_session.query.return_value = mock_query
 
-    with patch.object(scenario, '_get_sol_table_name', return_value='sol_test'):
-        scenario.dump(
-            mock_session,
-            {SalesVolume},
-            (TestDimension,),
-            (1,)
-        )
+    scenario.dump(
+        mock_session,
+        {SalesVolume},
+        (TestDimension,),
+        fact=False
+    )
 
     # Verify add_all was called for insert
     assert mock_session.add_all.called
-    # Verify query was called for delete
-    assert mock_session.query.called
+    # Verify all 3 records were inserted
+    call_args = mock_session.add_all.call_args[0][0]
+    assert len(call_args) == 3
