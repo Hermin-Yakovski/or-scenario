@@ -19,6 +19,7 @@ __all__ = [
     "generate_dimension_table",
     "generate_fact_table",
     "generate_sol_table",
+    "generate_extra_column",
     "DimParameter",
     "DimVersion",
     "DimSnapshot",
