@@ -189,19 +189,19 @@ name = "data-access-layer"
 version = "0.1.0"
 description = "General-purpose toolkits for data accessing with unified handler interface"
 optional = false
-python-versions = "^3.11"
+python-versions = ">=3.11,<4.0"
 groups = ["main"]
-files = []
-develop = true
+files = [
+    {file = "data_access_layer-0.1.0-py3-none-any.whl", hash = "sha256:51243e04e2fe590ca4590798ccd9ba97d4347262295176c3f911f7d2c23b30d4"},
+]
 
 [package.extras]
-all = ["openpyxl (>=24.0.0,<25.0.0)"]
-async = ["aiofiles (>=23.0.0,<24.0.0)", "aiosqlite (>=0.19.0,<0.20.0)"]
-xlsx = ["openpyxl (>=24.0.0,<25.0.0)"]
+all = ["openpyxl (>=3.0.0,<4.0.0)"]
+xlsx = ["openpyxl (>=3.0.0,<4.0.0)"]
 
 [package.source]
-type = "directory"
-url = "../data-access-layer"
+type = "file"
+url = "../wheels/data_access_layer-0.1.0-py3-none-any.whl"
 
 [[package]]
 name = "greenlet"
@@ -572,13 +572,14 @@ name = "omni-orm"
 version = "0.1.0"
 description = "SQLAlchemy ORM conventions for Operations Research applications"
 optional = false
-python-versions = "^3.11"
+python-versions = ">=3.11,<4.0"
 groups = ["main"]
-files = []
-develop = true
+files = [
+    {file = "omni_orm-0.1.0-py3-none-any.whl", hash = "sha256:9c9bbaed513fac6b48d9de846a5f4cfb6bc27d1ed1db8ec8017652af17f4bc5a"},
+]
 
 [package.dependencies]
-sqlalchemy = "^2.0"
+sqlalchemy = ">=2.0,<3.0"
 
 [package.extras]
 all = ["aiomysql (>=0.2,<0.3)", "aiosqlite (>=0.20,<0.21)", "asyncpg (>=0.30,<0.31)"]
@@ -587,26 +588,27 @@ postgresql = ["asyncpg (>=0.30,<0.31)"]
 sqlite = ["aiosqlite (>=0.20,<0.21)"]
 
 [package.source]
-type = "directory"
-url = "../sqlalchemy_demo"
+type = "file"
+url = "../wheels/omni_orm-0.1.0-py3-none-any.whl"
 
 [[package]]
 name = "or-algo"
 version = "0.2.0"
 description = "A general-purpose algorithm framework for orchestrating solvers"
 optional = false
-python-versions = "^3.11"
+python-versions = ">=3.11,<4.0"
 groups = ["main"]
-files = []
-develop = true
+files = [
+    {file = "or_algo-0.2.0-py3-none-any.whl", hash = "sha256:7c107ee5135dec99712c61c086cf79ef386ad6ded684c6c105d3df5bdd7a061b"},
+]
 
 [package.dependencies]
-ortools = "^9.15.6755"
+ortools = ">=9.15.6755,<10.0.0"
 register = "0.1.0"
 
 [package.source]
-type = "directory"
-url = "../or-algo"
+type = "file"
+url = "../wheels/or_algo-0.2.0-py3-none-any.whl"
 
 [[package]]
 name = "ortools"
@@ -1068,17 +1070,18 @@ name = "register"
 version = "0.1.0"
 description = "Multi-dimensional data registry with validation and pandas export"
 optional = false
-python-versions = "^3.11"
+python-versions = ">=3.11,<4.0"
 groups = ["main"]
-files = []
-develop = true
+files = [
+    {file = "register-0.1.0-py3-none-any.whl", hash = "sha256:ef16652172908427464e3b6ccccb2dc561bc0141b7063d74ee43bab66a59d6c9"},
+]
 
 [package.dependencies]
-pandas = "^2.0"
+pandas = ">=2.0,<3.0"
 
 [package.source]
-type = "directory"
-url = "../register"
+type = "file"
+url = "../wheels/register-0.1.0-py3-none-any.whl"
 
 [[package]]
 name = "ruff"
@@ -1264,4 +1267,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "110bdd235360be7ab2fff05c05cb6419fe0c92d05e235e0ae97cfd5b1a9f8b14"
+content-hash = "22510f65f74c61cac3b98524924433f076a5f65d12aca8ccc52116e8a47a8404"
