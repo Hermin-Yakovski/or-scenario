@@ -9,11 +9,11 @@ include = ["or_scenario/py.typed"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-register = {path = "../wheels/register-0.1.0-py3-none-any.whl"}
-or-algo = {path = "../wheels/or_algo-0.2.0-py3-none-any.whl"}
-data-access-layer = {path = "../wheels/data_access_layer-0.1.0-py3-none-any.whl"}
+register = {path = "../register/dist/register-0.1.0-py3-none-any.whl"}
+or-algo = {path = "../or-algo/dist/or_algo-0.2.0-py3-none-any.whl"}
+data-access-layer = {path = "../data-access-layer/dist/data_access_layer-0.1.0-py3-none-any.whl"}
 pydantic = "^2.0"
-omni-orm = {path = "../wheels/omni_orm-0.1.0-py3-none-any.whl"}
+omni-orm = {path = "../omni-orm/dist/omni_orm-0.1.0-py3-none-any.whl"}
 aiofiles = "^25.1.0"
 aiosqlite = "^0.22.1"
 
