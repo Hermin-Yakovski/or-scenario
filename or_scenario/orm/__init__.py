@@ -8,11 +8,12 @@ from omni_orm import (
     generate_dimension_table,
     generate_fact_table,
     generate_sol_table,
+    generate_extra_column,
 )
 
-DimParameter = generate_dimension_table("DimParameter")
-DimVersion = generate_dimension_table("DimVersion")
-DimSnapshot = generate_dimension_table("DimSnapshot")
+DimParameter = generate_dimension_table("Parameter")
+DimVersion = generate_dimension_table("Version")
+DimSnapshot = generate_dimension_table("Snapshot")
 
 __all__ = [
     "generate_dimension_table",
