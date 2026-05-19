@@ -192,16 +192,17 @@ optional = false
 python-versions = ">=3.11,<4.0"
 groups = ["main"]
 files = [
-    {file = "data_access_layer-0.1.0-py3-none-any.whl", hash = "sha256:51243e04e2fe590ca4590798ccd9ba97d4347262295176c3f911f7d2c23b30d4"},
+    {file = "data_access_layer-0.1.0-py3-none-any.whl", hash = "sha256:9d6a64557f6777de5e9b2f79843d7ca8bec92ab878462621751cdb08c084d028"},
 ]
 
 [package.extras]
-all = ["openpyxl (>=3.0.0,<4.0.0)"]
-xlsx = ["openpyxl (>=3.0.0,<4.0.0)"]
+all = ["openpyxl (>=24.0.0,<25.0.0)"]
+async = ["aiofiles (>=23.0.0,<24.0.0)", "aiosqlite (>=0.19.0,<0.20.0)"]
+xlsx = ["openpyxl (>=24.0.0,<25.0.0)"]
 
 [package.source]
 type = "file"
-url = "../wheels/data_access_layer-0.1.0-py3-none-any.whl"
+url = "../data-access-layer/dist/data_access_layer-0.1.0-py3-none-any.whl"
 
 [[package]]
 name = "greenlet"
@@ -575,7 +576,7 @@ optional = false
 python-versions = ">=3.11,<4.0"
 groups = ["main"]
 files = [
-    {file = "omni_orm-0.1.0-py3-none-any.whl", hash = "sha256:9c9bbaed513fac6b48d9de846a5f4cfb6bc27d1ed1db8ec8017652af17f4bc5a"},
+    {file = "omni_orm-0.1.0-py3-none-any.whl", hash = "sha256:15464552aff168b5308e57470e7f118df7ecdb9f0d6c1e03c5395f677a7c3cea"},
 ]
 
 [package.dependencies]
@@ -589,7 +590,7 @@ sqlite = ["aiosqlite (>=0.20,<0.21)"]
 
 [package.source]
 type = "file"
-url = "../wheels/omni_orm-0.1.0-py3-none-any.whl"
+url = "../omni-orm/dist/omni_orm-0.1.0-py3-none-any.whl"
 
 [[package]]
 name = "or-algo"
@@ -599,16 +600,16 @@ optional = false
 python-versions = ">=3.11,<4.0"
 groups = ["main"]
 files = [
-    {file = "or_algo-0.2.0-py3-none-any.whl", hash = "sha256:7c107ee5135dec99712c61c086cf79ef386ad6ded684c6c105d3df5bdd7a061b"},
+    {file = "or_algo-0.2.0-py3-none-any.whl", hash = "sha256:c75e201a37b8ffa34cdfe79dd055f8d0e539ccf50de44925a7d81b985e31289a"},
 ]
 
 [package.dependencies]
 ortools = ">=9.15.6755,<10.0.0"
-register = "0.1.0"
+register = {path = "D:/github/register/dist/register-0.1.0-py3-none-any.whl"}
 
 [package.source]
 type = "file"
-url = "../wheels/or_algo-0.2.0-py3-none-any.whl"
+url = "../or-algo/dist/or_algo-0.2.0-py3-none-any.whl"
 
 [[package]]
 name = "ortools"
@@ -1073,7 +1074,7 @@ optional = false
 python-versions = ">=3.11,<4.0"
 groups = ["main"]
 files = [
-    {file = "register-0.1.0-py3-none-any.whl", hash = "sha256:ef16652172908427464e3b6ccccb2dc561bc0141b7063d74ee43bab66a59d6c9"},
+    {file = "register-0.1.0-py3-none-any.whl", hash = "sha256:a4b4a78faebfb1a1f1b84c618086be486f74cac50033b8d06aad35c975ea683b"},
 ]
 
 [package.dependencies]
@@ -1081,7 +1082,7 @@ pandas = ">=2.0,<3.0"
 
 [package.source]
 type = "file"
-url = "../wheels/register-0.1.0-py3-none-any.whl"
+url = "../register/dist/register-0.1.0-py3-none-any.whl"
 
 [[package]]
 name = "ruff"
@@ -1267,4 +1268,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "22510f65f74c61cac3b98524924433f076a5f65d12aca8ccc52116e8a47a8404"
+content-hash = "eff9aa7513c131041aeb9cb8a360ab23d50b25a8f577e0abb0e2ed3e721e524b"
