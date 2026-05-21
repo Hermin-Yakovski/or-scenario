@@ -583,9 +583,7 @@ def test_dump_uses_fact_table_when_fact_true():
     """Test that dump() uses fact table and snapshot_id when fact=True."""
     from register import Dimension, Parameter
     from unittest.mock import MagicMock, patch
-
-    scenario = Scenario()
-    scenario._version_id = 123
+    import importlib
 
     TestDimension = Dimension("Test", "", "")
 
@@ -594,9 +592,17 @@ def test_dump_uses_fact_table_when_fact_true():
     mock_query.filter.return_value.delete.return_value = 0
     mock_session.query.return_value = mock_query
 
-    with patch('or_scenario.scenario.generate_fact_table') as mock_fact_table:
+    with patch('or_scenario.orm.generate_fact_table') as mock_fact_table:
         mock_table_cls = MagicMock()
         mock_fact_table.return_value = mock_table_cls
+
+        # Reload scenario module to apply the patch
+        import or_scenario.scenario
+        importlib.reload(or_scenario.scenario)
+        Scenario = or_scenario.scenario.Scenario
+
+        scenario = Scenario()
+        scenario._version_id = 123
 
         scenario.dump(
             mock_session,
@@ -609,6 +615,9 @@ def test_dump_uses_fact_table_when_fact_true():
         mock_fact_table.assert_called_once()
         # Verify filter used snapshot_id column
         mock_query.filter.assert_called_once()
+
+        # Reload scenario module to restore original state
+        importlib.reload(or_scenario.scenario)
 
 
 def test_dump_inserts_records_for_all_indexes():

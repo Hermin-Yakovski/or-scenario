@@ -9,13 +9,11 @@ include = ["or_scenario/py.typed"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+pydantic = "^2.13.4"
 register = {path = "../register/dist/register-0.1.0-py3-none-any.whl"}
-or-algo = {path = "../or-algo/dist/or_algo-0.2.0-py3-none-any.whl"}
 data-access-layer = {path = "../data-access-layer/dist/data_access_layer-0.1.0-py3-none-any.whl"}
-pydantic = "^2.0"
 omni-orm = {path = "../omni-orm/dist/omni_orm-0.1.0-py3-none-any.whl"}
-aiofiles = "^25.1.0"
-aiosqlite = "^0.22.1"
+or-algo = {path = "../or-algo/dist/or_algo-0.2.0-py3-none-any.whl"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"
@@ -33,6 +31,16 @@ strict = true
 warn_return_any = true
 warn_unused_ignores = true
 
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:.*declarative base already contains.*:sqlalchemy.exc.SAWarning"
+]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.source]]
+name = "mirrors"
+url = "https://mirrors.aliyun.com/pypi/simple/"
+priority = "primary"
