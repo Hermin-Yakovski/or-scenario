@@ -12,7 +12,9 @@ from omni_orm import (
 )
 
 DimParameter = generate_dimension_table("Parameter")
-DimVersion = generate_dimension_table("Version")
+DimVersion = generate_dimension_table("Version",
+    snapshot_id=generate_extra_column("snapshot_id", "integer", foreign_key='dim_snapshot.id', nullable=False),
+)
 DimSnapshot = generate_dimension_table("Snapshot")
 
 __all__ = [
