@@ -219,3 +219,9 @@ __marimo__/
 
 # Git worktrees
 .worktrees/
+
+# Claude Code worktrees
+.claude/worktrees/
+
+# JetBrains IDE
+.idea/
