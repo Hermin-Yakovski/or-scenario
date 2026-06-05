@@ -1,22 +1,21 @@
 # or_scenario/scenario.py
 from __future__ import annotations
+from typing import TYPE_CHECKING
 
-from pathlib import Path
-from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Set, Tuple, Type, TYPE_CHECKING
-from datetime import datetime
-
-if TYPE_CHECKING:
-    from sqlalchemy.orm import Session
-
-from dal import DataHandler
-from or_algo import Algorithm
-from register import Dimension, Id, Parameter, Register  # type: ignore[import-untyped]
-from sqlalchemy import text
-from sqlalchemy.orm import Session
-# pydantic imports removed - now in schema.py
+from register import Dimension, Id, Parameter, Register
 
 from .orm import generate_sol_table, generate_fact_table
-from .schema import BaseRequest, BaseResponse
+from .schema import BaseRequest
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from data_access_layer import DataHandler
+    from or_algo import Algorithm
+    from sqlalchemy.orm import Session
+    from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Set, Tuple, Type
+
+    from .schema import BaseResponse
 
 
 class Scenario:

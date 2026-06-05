@@ -4,9 +4,9 @@ from pathlib import Path
 from typing import Dict
 from unittest.mock import MagicMock
 from datetime import datetime
-from dal import JsonHandler, DataHandler
+from data_access_layer import JsonHandler, DataHandler
 from or_scenario import Scenario
-from or_scenario.scenario import BaseRequest, BaseResponse
+from or_scenario.schema import BaseRequest, BaseResponse
 from register import Register
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -370,7 +370,7 @@ def test_baserequest_creation():
 
 def test_baseresponse_creation():
     """Test BaseResponse can be created with all fields."""
-    from or_scenario.scenario import BaseResponse
+    from or_scenario.schema import BaseResponse
     response = BaseResponse(
         request_id=12345,
         status=200,
@@ -385,7 +385,7 @@ def test_baseresponse_creation():
 
 def test_baseresponse_with_response_field():
     """Test BaseResponse can hold custom response data."""
-    from or_scenario.scenario import BaseResponse
+    from or_scenario.schema import BaseResponse
     custom_data = {"key": "value", "number": 42}
     response = BaseResponse(
         request_id=12345,

@@ -4,7 +4,7 @@ from .schema import BaseRequest, BaseResponse
 from .scenario import Scenario
 
 # Re-export orm proxy for convenience
-from . import orm  # type: ignore
+from . import orm
 
 __all__ = ["Scenario", "BaseRequest", "BaseResponse", "orm"]
 __version__ = "0.3.0"

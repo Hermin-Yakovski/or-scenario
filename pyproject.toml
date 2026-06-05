@@ -10,10 +10,10 @@ include = ["or_scenario/py.typed"]
 [tool.poetry.dependencies]
 python = "^3.11"
 pydantic = "^2.13.4"
-register = {path = "../register/dist/register-0.1.0-py3-none-any.whl"}
-data-access-layer = {path = "../data-access-layer/dist/data_access_layer-0.1.0-py3-none-any.whl"}
-omni-orm = {path = "../omni-orm/dist/omni_orm-0.1.0-py3-none-any.whl"}
-or-algo = {path = "../or-algo/dist/or_algo-0.2.0-py3-none-any.whl"}
+register = {path = "D:/github/register/dist/register-0.1.0-py3-none-any.whl"}
+data-access-layer = {path = "D:/github/data-access-layer/dist/data_access_layer-0.1.0-py3-none-any.whl"}
+or-algo = {path = "D:/github/or-algo/dist/or_algo-0.2.0-py3-none-any.whl"}
+sqlalchemy = "^2.0.50"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"
@@ -22,10 +22,12 @@ mypy = "^1.10"
 pytest-cov = "^7.1.0"
 
 [tool.ruff]
+exclude = ["tests"]
 line-length = 100
 target-version = "py311"
 
 [tool.mypy]
+exclude = ["tests"]
 python_version = "3.11"
 strict = true
 warn_return_any = true
