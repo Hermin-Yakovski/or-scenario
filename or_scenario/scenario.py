@@ -123,7 +123,7 @@ class Scenario:
             raise RuntimeError("Algorithm not set. Call set_algorithm() first.")
         self._algorithm.solve(self._data)
 
-    def load(self, session: Optional["Session"] = None) -> None:
+    def load(self, session: Optional[Session] = None) -> None:
         """Load scenario data from database or files.
 
         Args:
@@ -137,7 +137,7 @@ class Scenario:
         raise NotImplementedError("Subclasses must implement load()")
 
     def dump(self,
-        session: "Session",
+        session: Session,
         params: Set[Parameter],
         dimension: Tuple[Dimension, ...],
         fact: bool = False,
