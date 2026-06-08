@@ -315,6 +315,29 @@ class Scenario:
 
         return frames
 
+    def save_xlsx(self, path: Path, display_cn: bool = False) -> None:
+        """Export scenario data to Excel file.
+
+        Creates an Excel file with one sheet per dimension combination.
+        Each sheet contains data for all parameters across that dimension.
+
+        Args:
+            path: Directory where Excel file will be saved
+            display_cn: If True, use Chinese names; otherwise use English names
+        """
+        frames = self.as_frames(display_cn)
+
+        with pd.ExcelWriter(path / f'{type(self).__name__}_version_{self._version_id}.xlsx', engine='openpyxl') as writer:
+            if not frames:
+                # Handle empty scenario - create empty sheet
+                pd.DataFrame().to_excel(writer, sheet_name="empty", index=False)
+            else:
+                # Create one sheet per dimension combination
+                for dimension, df in frames.items():
+                    sheet_name = '_'.join(d.name_cn if display_cn else d.name for d in dimension)
+                    df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+
     def response(self, *args: Any, **kwargs: Any) -> BaseResponse:
         """Package results into BaseResponse. Subclasses must implement."""
         raise NotImplementedError("Subclasses must implement response()")
