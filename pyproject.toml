@@ -14,12 +14,14 @@ register = {path = "D:/github/register/dist/register-0.1.0-py3-none-any.whl"}
 data-access-layer = {path = "D:/github/data-access-layer/dist/data_access_layer-0.1.0-py3-none-any.whl"}
 or-algo = {path = "D:/github/or-algo/dist/or_algo-0.2.0-py3-none-any.whl"}
 sqlalchemy = "^2.0.50"
+pandas = "^2.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"
 ruff = "^0.8"
 mypy = "^1.10"
 pytest-cov = "^7.1.0"
+pandas-stubs = "^2.0"
 
 [tool.ruff]
 exclude = ["tests"]
