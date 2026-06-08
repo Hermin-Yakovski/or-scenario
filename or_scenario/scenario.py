@@ -275,6 +275,46 @@ class Scenario:
                         )
                         raise ValidationError(msg)
 
+    def as_frames(self, display_cn: bool = False) -> dict[tuple[Dimension, ...], pd.DataFrame]:
+        """Convert scenario data to pandas DataFrames.
+
+        Args:
+            display_cn: If True, use Chinese names; otherwise use English names
+
+        Returns:
+            Dictionary mapping dimension tuples to DataFrames. Each DataFrame has
+            columns for each dimension followed by columns for each parameter.
+        """
+        frames: dict[tuple[Dimension, ...], pd.DataFrame] = {}
+        rows: dict[tuple[Dimension, ...], dict[tuple[int, ...], list[Any]]] = {}
+        columns: dict[tuple[Dimension, ...], list[str]] = {}
+
+        for key in self._data:
+            col: str = key.name_cn if display_cn else key.name
+            for dimension in self._data[key]:
+                if dimension not in rows:
+                    rows[dimension] = {}
+                    columns[dimension] = []
+                if col not in columns[dimension]:
+                    for index in rows[dimension]:
+                        rows[dimension][index].append(None)
+                    columns[dimension].append(col)
+                for index, value in self._data[key][dimension].items():
+                    if index not in rows[dimension]:
+                        rows[dimension][index] = [None for _ in columns[dimension]]
+                    rows[dimension][index][-1] = value
+
+        for dimension in columns:
+            dataframe_columns: list[str] = [
+                d.name_cn if display_cn else d.name for d in dimension
+            ] + columns[dimension]
+            dataframe_rows: list[list[Any]] = []
+            for index in rows[dimension]:
+                dataframe_rows.append([i for i in index] + rows[dimension][index])
+            frames[dimension] = pd.DataFrame(dataframe_rows, columns=dataframe_columns)
+
+        return frames
+
     def response(self, *args: Any, **kwargs: Any) -> BaseResponse:
         """Package results into BaseResponse. Subclasses must implement."""
         raise NotImplementedError("Subclasses must implement response()")
