@@ -3,9 +3,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from register import Dimension, Id, Parameter, Register
+from register.exception import DimensionError, ValidationError
+from typing import get_origin, get_args
+import logging
 
 from .orm import generate_sol_table, generate_fact_table
 from .schema import BaseRequest
+
+logger = logging.getLogger("or_scenario")
 
 if TYPE_CHECKING:
     from pathlib import Path
