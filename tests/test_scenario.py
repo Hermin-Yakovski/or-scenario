@@ -737,3 +737,90 @@ def test_scenario_as_frames_multiple_dimension_keys_for_same_parameter():
     df2 = frames[(dim2,)]
     assert df2.iloc[0]["test2"] == 2
     assert df2.iloc[0]["id"] == 200
+
+
+def test_scenario_save_xlsx_empty_scenario():
+    """Test save_xlsx() with empty scenario data."""
+    from pathlib import Path
+    import os
+    import tempfile
+
+    scenario = Scenario()
+    path = Path(tempfile.gettempdir())
+    scenario.save_xlsx(path)
+    expected_file = path / f"Scenario_version_{scenario._version_id}.xlsx"
+    assert os.path.exists(expected_file)
+    assert os.path.getsize(expected_file) > 0
+    os.remove(expected_file)
+
+
+def test_scenario_save_xlsx_single_parameter_single_dimension():
+    """Test save_xlsx() with one parameter and one dimension."""
+    from pathlib import Path
+    from register import Id, Index
+    import os
+    import tempfile
+
+    scenario = Scenario()
+    path = Path(tempfile.gettempdir())
+    scenario._data[Id][(Index,)][(1,)] = 42
+    scenario.save_xlsx(path)
+    expected_file = path / f"Scenario_version_{scenario._version_id}.xlsx"
+    assert os.path.exists(expected_file)
+    assert os.path.getsize(expected_file) > 0
+    os.remove(expected_file)
+
+
+def test_scenario_save_xlsx_multiple_parameters_same_dimension():
+    """Test save_xlsx() with multiple parameters sharing same dimension."""
+    from pathlib import Path
+    from register import Id, Name, Index
+    import os
+    import tempfile
+
+    scenario = Scenario()
+    path = Path(tempfile.gettempdir())
+    scenario._data[Id][(Index,)][(1,)] = 42
+    scenario._data[Name][(Index,)][(1,)] = "test_name"
+    scenario.save_xlsx(path)
+    expected_file = path / f"Scenario_version_{scenario._version_id}.xlsx"
+    assert os.path.exists(expected_file)
+    assert os.path.getsize(expected_file) > 0
+    os.remove(expected_file)
+
+
+def test_scenario_save_xlsx_multiple_dimension_combinations():
+    """Test save_xlsx() with parameter having multiple dimension combinations."""
+    from pathlib import Path
+    from register import Id, Dimension
+    import os
+    import tempfile
+
+    scenario = Scenario()
+    path = Path(tempfile.gettempdir())
+    dim1 = Dimension("test1", "测试1", "T1")
+    dim2 = Dimension("test2", "测试2", "T2")
+    scenario._data[Id][(dim1,)][(1,)] = 100
+    scenario._data[Id][(dim2,)][(2,)] = 200
+    scenario.save_xlsx(path)
+    expected_file = path / f"Scenario_version_{scenario._version_id}.xlsx"
+    assert os.path.exists(expected_file)
+    assert os.path.getsize(expected_file) > 0
+    os.remove(expected_file)
+
+
+def test_scenario_save_xlsx_display_cn():
+    """Test save_xlsx() with display_cn=True for Chinese names."""
+    from pathlib import Path
+    from register import Id, Index
+    import os
+    import tempfile
+
+    scenario = Scenario()
+    path = Path(tempfile.gettempdir())
+    scenario._data[Id][(Index,)][(1,)] = 42
+    scenario.save_xlsx(path, display_cn=True)
+    expected_file = path / f"Scenario_version_{scenario._version_id}.xlsx"
+    assert os.path.exists(expected_file)
+    assert os.path.getsize(expected_file) > 0
+    os.remove(expected_file)
