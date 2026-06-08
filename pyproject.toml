@@ -15,6 +15,7 @@ data-access-layer = {path = "D:/github/data-access-layer/dist/data_access_layer-
 or-algo = {path = "D:/github/or-algo/dist/or_algo-0.2.0-py3-none-any.whl"}
 sqlalchemy = "^2.0.50"
 pandas = "^2.0"
+openpyxl = "^3.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"
