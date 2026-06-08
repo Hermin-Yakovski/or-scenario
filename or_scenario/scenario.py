@@ -2,9 +2,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from register import Dimension, Id, Parameter, Register
+from register import Dimension, Id, Parameter, Register, Index
+from register.register import Method
 from register.exception import DimensionError, ValidationError
-from typing import get_origin, get_args
+from typing import get_origin, get_args, Any
 import logging
 
 from .orm import generate_sol_table, generate_fact_table
@@ -191,11 +192,87 @@ class Scenario:
     def validate(self, param: Parameter = Id) -> None:
         """Validate scenario data.
 
+        Validates all parameters in self._data against the reference dimension
+        from the specified parameter (defaults to Id).
+
         Args:
-            param: The parameter to validate (defaults to Id)
+            param: The parameter whose dimension serves as reference for validation
+                   (defaults to Id)
+
+        Raises:
+            DimensionError: If index length mismatch or invalid index reference
+            ValidationError: If value doesn't match expected vtype
         """
         dim = self._data[param]
-        self._data.validate(dim, raise_errors=True)
+
+        for key in self._data:
+            for dimension in self._data[key]:
+                for index in self._data[key][dimension]:
+                    # Validate index length matches dimension length
+                    if len(dimension) != len(index):
+                        msg = (
+                            f"[v{key.id}] {key}{dimension}{index}: "
+                            f"dimension length {len(dimension)} does not match index length {len(index)}"
+                        )
+                        raise DimensionError(msg)
+
+                    # Validate index exists in reference dimension
+                    for d, ix in zip(dimension, index):
+                        if not ((ix,) in dim[d,] or isinstance(ix, Method) or d == Index):
+                            msg = (
+                                f"[v{key.id}] {key}{dimension}{index}: "
+                                f"index {ix} does not match any index of dimension {d.name}"
+                            )
+                            raise DimensionError(msg)
+
+                    value = self._data[key][dimension][index]
+                    if key.vtype is None or key.vtype == Any:
+                        pass
+
+                    elif get_origin(key.vtype) in [list, set, tuple]:
+                        # Validate iterable type
+                        origin = get_origin(key.vtype)
+                        if origin is not None and not isinstance(value, origin):
+                            msg = (
+                                f"[v{key.id}] {key}{dimension}{index}: "
+                                f"expected {origin}, got {type(value)}, value={value}"
+                            )
+                            raise ValidationError(msg)
+
+                        arg = get_args(key.vtype)[0]
+                        if get_args(arg):
+                            arg = get_args(arg)[0]
+
+                        for v in value:
+                            if isinstance(arg, Dimension):
+                                if (v,) not in dim[arg,]:
+                                    msg = (
+                                        f"[v{key.id}] {key}{dimension}{index}: "
+                                        f"value {v} does not match any index of dimension {arg.name}"
+                                    )
+                                    raise ValidationError(msg)
+                            elif not isinstance(v, arg):
+                                msg = (
+                                    f"[v{key.id}] {key}{dimension}{index}: "
+                                    f"{get_origin(key.vtype)} expected elements of {arg}, "
+                                    f"got {type(v)}, value={v}"
+                                )
+                                raise ValidationError(msg)
+
+                    elif isinstance(key.vtype, Dimension):
+                        if (value,) not in dim[key.vtype,]:
+                            msg = (
+                                f"[v{key.id}] {key}{dimension}{index}: "
+                                f"value {value} does not match any index of dimension {key.vtype.name}"
+                            )
+                            raise ValidationError(msg)
+
+                    elif not isinstance(value, key.vtype):
+                        msg = (
+                            f"[v{key.id}] {key}{dimension}{index}: "
+                            f"expected {key.vtype}, got {type(value)}, value={value}"
+                        )
+                        raise ValidationError(msg)
 
     def response(self, *args: Any, **kwargs: Any) -> BaseResponse:
         """Package results into BaseResponse. Subclasses must implement."""
