@@ -653,3 +653,87 @@ def test_dump_inserts_records_for_all_indexes():
     # Verify all 3 records were inserted
     call_args = mock_session.add_all.call_args[0][0]
     assert len(call_args) == 3
+
+
+def test_scenario_as_frames_empty():
+    """Test Scenario.as_frames() returns empty dict for empty scenario."""
+    from register import Id, Index
+
+    scenario = Scenario()
+    frames = scenario.as_frames()
+    assert frames == {}
+
+
+def test_scenario_as_frames_single_value():
+    """Test Scenario.as_frames() with single value."""
+    from register import Id, Index
+
+    scenario = Scenario()
+    scenario._data[Id][(Index,)][(1,)] = 42
+    frames = scenario.as_frames()
+    assert len(frames) == 1
+    df = frames[(Index,)]
+    assert df.iloc[0]["id"] == 42
+
+
+def test_scenario_as_frames_multiple_parameters():
+    """Test Scenario.as_frames() with multiple parameters."""
+    from register import Id, Name, Index
+
+    scenario = Scenario()
+    scenario._data[Id][(Index,)][(1,)] = 42
+    scenario._data[Name][(Index,)][(1,)] = "test_name"
+    frames = scenario.as_frames()
+    df = frames[(Index,)]
+    assert df.iloc[0]["id"] == 42
+    assert df.iloc[0]["name"] == "test_name"
+
+
+def test_scenario_as_frames_display_cn():
+    """Test Scenario.as_frames() with Chinese names."""
+    from register import Id, Index
+
+    scenario = Scenario()
+    scenario._data[Id][(Index,)][(1,)] = 42
+    frames = scenario.as_frames(display_cn=True)
+    df = frames[(Index,)]
+    assert "下标" in df.columns
+    assert df.iloc[0]["ID"] == 42
+
+
+def test_scenario_as_frames_multiple_dimensions():
+    """Test Scenario.as_frames() with multiple dimensions."""
+    from register import Id, Dimension
+
+    dim1 = Dimension("test1", "测试1", "T1")
+    dim2 = Dimension("test2", "测试2", "T2")
+    scenario = Scenario()
+    scenario._data[Id][(dim1, dim2)][(1, 10)] = 42
+    frames = scenario.as_frames()
+    df = frames[(dim1, dim2)]
+    assert df.iloc[0]["test1"] == 1
+    assert df.iloc[0]["test2"] == 10
+    assert df.iloc[0]["id"] == 42
+
+
+def test_scenario_as_frames_multiple_dimension_keys_for_same_parameter():
+    """Test Scenario.as_frames() with same parameter, different dimensions."""
+    from register import Id, Dimension
+
+    dim1 = Dimension("test1", "测试1", "T1")
+    dim2 = Dimension("test2", "测试2", "T2")
+    scenario = Scenario()
+    # Same parameter (Id) with different dimension combinations
+    scenario._data[Id][(dim1,)][(1,)] = 100
+    scenario._data[Id][(dim2,)][(2,)] = 200
+    frames = scenario.as_frames()
+    # Should have two separate frames
+    assert len(frames) == 2
+    # Check first frame
+    df1 = frames[(dim1,)]
+    assert df1.iloc[0]["test1"] == 1
+    assert df1.iloc[0]["id"] == 100
+    # Check second frame
+    df2 = frames[(dim2,)]
+    assert df2.iloc[0]["test2"] == 2
+    assert df2.iloc[0]["id"] == 200
