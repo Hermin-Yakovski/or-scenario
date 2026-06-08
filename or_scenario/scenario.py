@@ -7,6 +7,7 @@ from register.register import Method
 from register.exception import DimensionError, ValidationError
 from typing import get_origin, get_args, Any
 import logging
+import pandas as pd
 
 from .orm import generate_sol_table, generate_fact_table
 from .schema import BaseRequest
