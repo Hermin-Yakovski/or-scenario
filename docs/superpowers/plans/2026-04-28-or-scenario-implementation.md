@@ -148,7 +148,7 @@ Run: `mkdir -p tests/fixtures`
 from pathlib import Path
 from typing import Any, Dict, List
 from dal import JsonHandler
-from register import Dimension, Index, Parameter, Register
+from or_register import Dimension, Index, Parameter, Register
 from or_scenario import LoadStep
 
 
@@ -249,7 +249,7 @@ git commit -m "feat: add LoadStep class"
 ```python
 # tests/test_scenario.py
 from unittest.mock import MagicMock
-from register import Dimension, Index, Parameter
+from or_register import Dimension, Index, Parameter
 
 
 def test_loadstep_run():
@@ -358,7 +358,7 @@ from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Tupl
 
 from dal import DataHandler
 from or_algo import Algorithm
-from register import Dimension, Parameter, Register
+from or_register import Dimension, Parameter, Register
 
 
 class LoadStep:
@@ -404,7 +404,7 @@ git commit -m "feat: add Scenario class with initialization"
 
 ```python
 # tests/test_scenario.py
-from register import Dimension, Index, Parameter
+from or_register import Dimension, Index, Parameter
 
 # Test dimension and parameter
 Product = Dimension("Product", "产品", "PROD")
@@ -693,7 +693,7 @@ git commit -m "feat: add Scenario.load() method"
 
 ```python
 # tests/test_scenario.py
-from register import Id
+from or_register import Id
 
 
 def test_scenario_validate():
@@ -727,7 +727,7 @@ Expected: FAIL with "Scenario has no attribute 'validate'" or AttributeError
 
 ```python
 # or_scenario/scenario.py - add to Scenario class
-from register import Id
+from or_register import Id
 
 
 def validate(self, param: Parameter = Id) -> None:
@@ -761,7 +761,7 @@ git commit -m "feat: add Scenario.validate() method"
 # tests/test_scenario.py
 import tempfile
 import json
-from register import Dimension
+from or_register import Dimension
 
 # Define test domain elements
 Product = Dimension("Product", "产品", "PROD")
@@ -907,7 +907,7 @@ poetry add or-scenario
 ```python
 from pathlib import Path
 from dal import JsonHandler
-from register import Dimension, Parameter
+from or_register import Dimension, Parameter
 from or_scenario import Scenario
 
 # Define domain-specific elements

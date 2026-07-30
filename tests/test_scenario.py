@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 from data_access_layer import DataHandler, JsonHandler
 from pydantic import BaseModel, Field
-from register import Register
+from or_register import Register
 from sqlalchemy.orm import Session
 
 from or_scenario import Scenario
@@ -93,7 +93,7 @@ def test_decorator_fetches_and_maps():
     """Test decorator fetches data via handler and calls mapping function."""
     from unittest.mock import MagicMock
 
-    from register import Dimension, NumKey
+    from or_register import Dimension, NumKey
 
     Product = Dimension("Product", "产品", "PROD")
     TestVolume = NumKey(1, "test_volume", "test_volume", float)
@@ -168,7 +168,7 @@ def test_decorator_non_strict_continues():
 
 def test_decorator_kwargs_passthrough():
     """Test decorator passes **kwargs to mapping function."""
-    from register import Dimension, NumKey
+    from or_register import Dimension, NumKey
 
     Product = Dimension("Product", "产品", "PROD")
     TestVolume = NumKey(1, "test_volume", "test_volume", float)
@@ -206,7 +206,7 @@ def test_decorator_kwargs_passthrough():
 
 def test_scenario_get():
     """Test Scenario.get() retrieves values from _data."""
-    from register import Dimension, NumKey
+    from or_register import Dimension, NumKey
 
     Product = Dimension("Product", "产品", "PROD")
     SalesVolume = NumKey(1, "sales_volume", "销量", float)
@@ -218,7 +218,7 @@ def test_scenario_get():
 
 def test_scenario_set():
     """Test Scenario.set() sets values in _data."""
-    from register import Dimension, NumKey
+    from or_register import Dimension, NumKey
 
     Product = Dimension("Product", "产品", "PROD")
     SalesVolume = NumKey(1, "sales_volume", "销量", float)
@@ -307,7 +307,7 @@ def test_scenario_load():
 
 def test_scenario_validate():
     """Test Scenario.validate() validates data with default parameter."""
-    from register import Id, Index
+    from or_register import Id, Index
 
     scenario = Scenario()
     scenario._data[Id][(Index,)][(1,)] = 1
@@ -316,7 +316,7 @@ def test_scenario_validate():
 
 def test_scenario_validate_default_param():
     """Test Scenario.validate() with explicit default parameter."""
-    from register import Id, Index
+    from or_register import Id, Index
 
     scenario = Scenario()
     scenario._data[Id][(Index,)][(1,)] = 1
@@ -327,7 +327,7 @@ def test_scenario_integration():
     """Integration test with domain-specific scenario using decorator pattern."""
     import json
 
-    from register import Dimension, NumKey
+    from or_register import Dimension, NumKey
 
     # Define domain-specific dimensions and parameters
     Product = Dimension("Product", "产品", "PROD")
@@ -538,7 +538,7 @@ def test_dump_skips_missing_parameters():
     """Test that dump() skips parameters that don't exist in Register."""
     from unittest.mock import MagicMock
 
-    from register import Dimension, NumKey
+    from or_register import Dimension, NumKey
 
     scenario = Scenario()
     scenario._version_id = 123
@@ -571,7 +571,7 @@ def test_dump_deletes_existing_version_records():
     """Test that dump() deletes existing records with same version_id."""
     from unittest.mock import MagicMock
 
-    from register import Dimension
+    from or_register import Dimension
 
     scenario = Scenario()
     scenario._version_id = 123
@@ -593,7 +593,7 @@ def test_dump_uses_fact_table_when_fact_true():
     import importlib
     from unittest.mock import MagicMock, patch
 
-    from register import Dimension
+    from or_register import Dimension
 
     TestDimension = Dimension("Test", "", "")
 
@@ -630,7 +630,7 @@ def test_dump_inserts_records_for_all_indexes():
     """Test that dump() inserts records for all indexes in Register."""
     from unittest.mock import MagicMock
 
-    from register import Dimension, NumKey
+    from or_register import Dimension, NumKey
 
     scenario = Scenario()
     scenario._version_id = 123
@@ -667,7 +667,7 @@ def test_scenario_as_frames_empty():
 
 def test_scenario_as_frames_single_value():
     """Test Scenario.as_frames() with single value."""
-    from register import Id, Index
+    from or_register import Id, Index
 
     scenario = Scenario()
     scenario._data[Id][(Index,)][(1,)] = 42
@@ -679,7 +679,7 @@ def test_scenario_as_frames_single_value():
 
 def test_scenario_as_frames_multiple_parameters():
     """Test Scenario.as_frames() with multiple parameters."""
-    from register import Id, Index, Name
+    from or_register import Id, Index, Name
 
     scenario = Scenario()
     scenario._data[Id][(Index,)][(1,)] = 42
@@ -692,7 +692,7 @@ def test_scenario_as_frames_multiple_parameters():
 
 def test_scenario_as_frames_display_cn():
     """Test Scenario.as_frames() with Chinese names."""
-    from register import Id, Index
+    from or_register import Id, Index
 
     scenario = Scenario()
     scenario._data[Id][(Index,)][(1,)] = 42
@@ -704,7 +704,7 @@ def test_scenario_as_frames_display_cn():
 
 def test_scenario_as_frames_multiple_dimensions():
     """Test Scenario.as_frames() with multiple dimensions."""
-    from register import Dimension, Id
+    from or_register import Dimension, Id
 
     dim1 = Dimension("test1", "测试1", "T1")
     dim2 = Dimension("test2", "测试2", "T2")
@@ -719,7 +719,7 @@ def test_scenario_as_frames_multiple_dimensions():
 
 def test_scenario_as_frames_multiple_dimension_keys_for_same_parameter():
     """Test Scenario.as_frames() with same parameter, different dimensions."""
-    from register import Dimension, Id
+    from or_register import Dimension, Id
 
     dim1 = Dimension("test1", "测试1", "T1")
     dim2 = Dimension("test2", "测试2", "T2")
@@ -761,7 +761,7 @@ def test_scenario_save_xlsx_single_parameter_single_dimension():
     import tempfile
     from pathlib import Path
 
-    from register import Id, Index
+    from or_register import Id, Index
 
     scenario = Scenario()
     path = Path(tempfile.gettempdir())
@@ -779,7 +779,7 @@ def test_scenario_save_xlsx_multiple_parameters_same_dimension():
     import tempfile
     from pathlib import Path
 
-    from register import Id, Index, Name
+    from or_register import Id, Index, Name
 
     scenario = Scenario()
     path = Path(tempfile.gettempdir())
@@ -798,7 +798,7 @@ def test_scenario_save_xlsx_multiple_dimension_combinations():
     import tempfile
     from pathlib import Path
 
-    from register import Dimension, Id
+    from or_register import Dimension, Id
 
     scenario = Scenario()
     path = Path(tempfile.gettempdir())
@@ -819,7 +819,7 @@ def test_scenario_save_xlsx_display_cn():
     import tempfile
     from pathlib import Path
 
-    from register import Id, Index
+    from or_register import Id, Index
 
     scenario = Scenario()
     path = Path(tempfile.gettempdir())

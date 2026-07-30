@@ -159,7 +159,7 @@ The mapping function is defined as a closure in the Scenario subclass and writes
 from typing import Any, Dict, Hashable, List
 from pathlib import Path
 from dal import JsonHandler
-from register import Dimension, Index, Parameter, Id
+from or_register import Dimension, Index, Parameter, Id
 from or_scenario import Scenario
 
 # Define domain-specific dimensions

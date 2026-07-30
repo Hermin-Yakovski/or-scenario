@@ -82,7 +82,7 @@ from datetime import datetime  # Add this
 
 from dal import DataHandler
 from or_algo import Algorithm
-from register import Dimension, Id, Parameter, Register
+from or_register import Dimension, Id, Parameter, Register
 from pydantic import BaseModel, Field, Any  # Add this
 ```
 
@@ -562,7 +562,7 @@ poetry add or-scenario
 ```python
 from pathlib import Path
 from dal import JsonHandler
-from register import Dimension, Parameter
+from or_register import Dimension, Parameter
 from or_scenario import Scenario
 
 Product = Dimension("Product", "产品", "PROD")

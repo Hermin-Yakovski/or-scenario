@@ -102,7 +102,7 @@ def test_scenario_save_xlsx_empty_scenario():
 def test_scenario_save_xlsx_single_parameter_single_dimension():
     """Test save_xlsx() with one parameter and one dimension."""
     from pathlib import Path
-    from register import Id, Index
+    from or_register import Id, Index
     import os
     
     scenario = Scenario()
@@ -118,7 +118,7 @@ def test_scenario_save_xlsx_single_parameter_single_dimension():
 def test_scenario_save_xlsx_multiple_parameters_same_dimension():
     """Test save_xlsx() with multiple parameters sharing same dimension."""
     from pathlib import Path
-    from register import Id, Name, Index
+    from or_register import Id, Name, Index
     import os
     
     scenario = Scenario()
@@ -135,7 +135,7 @@ def test_scenario_save_xlsx_multiple_parameters_same_dimension():
 def test_scenario_save_xlsx_multiple_dimension_combinations():
     """Test save_xlsx() with parameter having multiple dimension combinations."""
     from pathlib import Path
-    from register import Id, Dimension
+    from or_register import Id, Dimension
     import os
     
     scenario = Scenario()
@@ -154,7 +154,7 @@ def test_scenario_save_xlsx_multiple_dimension_combinations():
 def test_scenario_save_xlsx_display_cn():
     """Test save_xlsx() with display_cn=True for Chinese names."""
     from pathlib import Path
-    from register import Id, Index
+    from or_register import Id, Index
     import os
     
     scenario = Scenario()

@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from or_scenario import Scenario
 from or_scenario.orm import generate_dimension_table, generate_sol_table
-from register import Dimension, Parameter
+from or_register import Dimension, Parameter
 
 # Setup ORM models
 DimProduct = generate_dimension_table("Product")

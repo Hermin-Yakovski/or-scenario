@@ -233,7 +233,7 @@ Add this test after the existing `test_scenario_init()` test:
 ```python
 def test_decorator_transforms_method():
     """Test that @_load_step decorator transforms method signature."""
-    from register import Dimension, Parameter
+    from or_register import Dimension, Parameter
 
     Product = Dimension("Product", "产品", "PROD")
     TestVolume = Parameter(1, "test_volume", "test_volume", float)
@@ -287,7 +287,7 @@ Add this test after the previous decorator test:
 ```python
 def test_decorator_fetches_and_maps():
     """Test decorator fetches data via handler and calls mapping function."""
-    from register import Dimension, Parameter
+    from or_register import Dimension, Parameter
     from unittest.mock import MagicMock
 
     Product = Dimension("Product", "产品", "PROD")
@@ -435,7 +435,7 @@ Add this test after the previous decorator test:
 ```python
 def test_decorator_kwargs_passthrough():
     """Test decorator passes **kwargs to mapping function."""
-    from register import Dimension, Parameter
+    from or_register import Dimension, Parameter
 
     Product = Dimension("Product", "产品", "PROD")
     TestVolume = Parameter(1, "test_volume", "test_volume", float)
@@ -612,7 +612,7 @@ def test_scenario_integration():
     """Integration test with domain-specific scenario loading JSON data."""
     import tempfile
     import json
-    from register import Dimension, Parameter
+    from or_register import Dimension, Parameter
 
     # Define domain-specific dimensions and parameters
     Product = Dimension("Product", "产品", "PROD")
@@ -673,7 +673,7 @@ def test_scenario_integration():
     """Integration test with domain-specific scenario using decorator pattern."""
     import tempfile
     import json
-    from register import Dimension, Parameter
+    from or_register import Dimension, Parameter
 
     # Define domain-specific dimensions and parameters
     Product = Dimension("Product", "产品", "PROD")
@@ -774,7 +774,7 @@ def test_scenario_integration():
     """Integration test with domain-specific scenario using decorator pattern."""
     import tempfile
     import json
-    from register import Dimension, Parameter
+    from or_register import Dimension, Parameter
 
     # Define domain-specific dimensions and parameters
     Product = Dimension("Product", "产品", "PROD")

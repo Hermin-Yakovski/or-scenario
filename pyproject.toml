@@ -11,7 +11,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.13.4",
-    "or-register",
+    "or-register>=0.3.0",
     "data-access-layer[async]",
     "or-algo",
     "omni-orm",

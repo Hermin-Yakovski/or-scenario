@@ -268,7 +268,7 @@ Expected: Current imports at top of file
 
 - [ ] **Step 2: Add validation-related imports**
 
-Add these imports to `or_scenario/scenario.py` after line 5 (after `from register import Dimension, Id, Parameter, Register`):
+Add these imports to `or_scenario/scenario.py` after line 5 (after `from or_register import Dimension, Id, Parameter, Register`):
 
 ```python
 from register.exception import DimensionError, ValidationError
@@ -283,7 +283,7 @@ The imports section should now be:
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from register import Dimension, Id, Parameter, Register
+from or_register import Dimension, Id, Parameter, Register
 from register.exception import DimensionError, ValidationError
 from typing import get_origin, get_args
 import logging
@@ -441,12 +441,12 @@ def validate(self, param: Parameter = Id) -> None:
 The inlined code references `Method` and `Index` which need to be imported. Add to imports:
 
 ```python
-from register import Dimension, Id, Parameter, Register, Method, Index
+from or_register import Dimension, Id, Parameter, Register, Method, Index
 ```
 
 Edit line 5 to include `Method, Index`:
 ```python
-from register import Dimension, Id, Parameter, Register, Method, Index
+from or_register import Dimension, Id, Parameter, Register, Method, Index
 ```
 
 - [ ] **Step 4: Run mypy on or_scenario**
@@ -520,7 +520,7 @@ Create a temporary test file to verify type flexibility:
 ```bash
 cd D:/github/or-scenario
 cat > /tmp/test_register_var.py << 'EOF'
-from register import Register
+from or_register import Register
 from typing import Any
 
 class Var:
@@ -567,7 +567,7 @@ Expected: No ruff errors
 
 ```bash
 cd D:/github/or-scenario
-python -c "from register import Register; print(dir(Register))" | grep validate
+python -c "from or_register import Register; print(dir(Register))" | grep validate
 ```
 
 Expected: No output (validate method should not exist)
@@ -578,7 +578,7 @@ Expected: No output (validate method should not exist)
 cd D:/github/or-scenario
 python -c "
 from or_scenario import Scenario
-from register import Id, Index
+from or_register import Id, Index
 scenario = Scenario()
 scenario._data[Id][(Index,)][(1,)] = 1
 scenario.validate()

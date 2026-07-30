@@ -311,7 +311,7 @@ import pandas as pd
 
 The imports section should look like:
 ```python
-from register import Dimension, Id, Parameter, Register, Index
+from or_register import Dimension, Id, Parameter, Register, Index
 from register.register import Method
 from register.exception import DimensionError, ValidationError
 from typing import get_origin, get_args, Any
@@ -463,7 +463,7 @@ Add this test to the end of `tests/test_scenario.py`:
 ```python
 def test_scenario_as_frames_empty():
     """Test Scenario.as_frames() returns empty dict for empty scenario."""
-    from register import Id
+    from or_register import Id
 
     scenario = Scenario()
     frames = scenario.as_frames()
@@ -475,7 +475,7 @@ def test_scenario_as_frames_empty():
 ```python
 def test_scenario_as_frames_single_value():
     """Test Scenario.as_frames() with single value."""
-    from register import Id, Index
+    from or_register import Id, Index
 
     scenario = Scenario()
     scenario._data[Id][(Index,)][(1,)] = 42
@@ -490,7 +490,7 @@ def test_scenario_as_frames_single_value():
 ```python
 def test_scenario_as_frames_multiple_parameters():
     """Test Scenario.as_frames() with multiple parameters."""
-    from register import Id, Name, Index
+    from or_register import Id, Name, Index
 
     scenario = Scenario()
     scenario._data[Id][(Index,)][(1,)] = 42
@@ -506,7 +506,7 @@ def test_scenario_as_frames_multiple_parameters():
 ```python
 def test_scenario_as_frames_display_cn():
     """Test Scenario.as_frames() with Chinese names."""
-    from register import Id, Index
+    from or_register import Id, Index
 
     scenario = Scenario()
     scenario._data[Id][(Index,)][(1,)] = 42
@@ -521,7 +521,7 @@ def test_scenario_as_frames_display_cn():
 ```python
 def test_scenario_as_frames_multiple_dimensions():
     """Test Scenario.as_frames() with multiple dimensions."""
-    from register import Id, Dimension
+    from or_register import Id, Dimension
 
     dim1 = Dimension("test1", "测试1", "T1")
     dim2 = Dimension("test2", "测试2", "T2")
@@ -539,7 +539,7 @@ def test_scenario_as_frames_multiple_dimensions():
 ```python
 def test_scenario_as_frames_multiple_dimension_keys_for_same_parameter():
     """Test Scenario.as_frames() with same parameter, different dimensions."""
-    from register import Id, Dimension
+    from or_register import Id, Dimension
 
     dim1 = Dimension("test1", "测试1", "T1")
     dim2 = Dimension("test2", "测试2", "T2")
@@ -702,7 +702,7 @@ Expected: No ruff errors
 - [ ] **Step 1: Verify Register.as_frames() is gone**
 
 ```bash
-poetry run python -c "from register import Register; print(dir(Register))" | grep as_frames
+poetry run python -c "from or_register import Register; print(dir(Register))" | grep as_frames
 ```
 
 Expected: No output (as_frames method should not exist)
@@ -712,7 +712,7 @@ Expected: No output (as_frames method should not exist)
 ```bash
 poetry run python -c "
 from or_scenario import Scenario
-from register import Id, Index
+from or_register import Id, Index
 scenario = Scenario()
 scenario._data[Id][(Index,)][(1,)] = 42
 frames = scenario.as_frames()

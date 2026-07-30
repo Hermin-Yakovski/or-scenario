@@ -139,7 +139,7 @@ from datetime import datetime
 
 from dal import DataHandler
 from or_algo import Algorithm
-from register import Dimension, Id, Parameter, Register  # type: ignore[import-untyped]
+from or_register import Dimension, Id, Parameter, Register  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field
 ```
 
@@ -152,7 +152,7 @@ The imports section should now end with:
 ```python
 from dal import DataHandler
 from or_algo import Algorithm
-from register import Dimension, Id, Parameter, Register  # type: ignore[import-untyped]
+from or_register import Dimension, Id, Parameter, Register  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field
 
 from .schema import BaseRequest, BaseResponse

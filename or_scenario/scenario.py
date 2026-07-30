@@ -6,7 +6,7 @@ import logging
 from typing import TYPE_CHECKING, Any, get_args, get_origin
 
 import pandas as pd
-from register import (
+from or_register import (
     Dimension,
     DimensionError,
     Id,
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
     from data_access_layer import DataHandler
     from or_algo import Algorithm
-    from register import RegisterKey
+    from or_register import RegisterKey
     from sqlalchemy.orm import Session
 
     from .schema import BaseResponse

@@ -37,7 +37,7 @@ Add `dump()` method to `Scenario` class for persisting algorithm results from `R
 ```python
 from typing import Set, Tuple
 from sqlalchemy.orm import Session
-from register import Dimension, Parameter
+from or_register import Dimension, Parameter
 
 
 class Scenario:
@@ -123,7 +123,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from or_scenario import Scenario
 from or_scenario.orm import generate_dimension_table, generate_sol_table
-from register import Dimension, Parameter
+from or_register import Dimension, Parameter
 
 # Setup
 DimProduct = generate_dimension_table("Product")

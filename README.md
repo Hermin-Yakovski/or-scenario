@@ -24,7 +24,7 @@ poetry add or-scenario
 ```python
 from pathlib import Path
 from dal import JsonHandler
-from register import Dimension, Parameter
+from or_register import Dimension, Parameter
 from or_scenario import Scenario
 
 Product = Dimension("Product", "产品", "PROD")

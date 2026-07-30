@@ -26,7 +26,7 @@ Override the `load(session)` method to fetch from database:
 
 ```python
 from sqlalchemy import select
-from register import Dimension, Parameter
+from or_register import Dimension, Parameter
 
 # Define domain-specific dimensions
 Product = Dimension("Product", "产品", "PROD")
