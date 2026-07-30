@@ -44,9 +44,10 @@ from pydantic import BaseModel, Field
 
 class BaseRequest(BaseModel):
     """Base request with common fields."""
+
     request_id: int = Field(
         default_factory=lambda: int(datetime.now().strftime("%y%m%d%H%M%S%f")[:-4]),
-        description="identity of the data"
+        description="identity of the data",
     )
 ```
 
@@ -86,14 +87,16 @@ from pydantic import BaseModel, Field
 
 class BaseRequest(BaseModel):
     """Base request with common fields."""
+
     request_id: int = Field(
         default_factory=lambda: int(datetime.now().strftime("%y%m%d%H%M%S%f")[:-4]),
-        description="identity of the data"
+        description="identity of the data",
     )
 
 
 class BaseResponse(BaseModel):
     """Base response with common fields."""
+
     request_id: int = Field(..., description="identity of the data")
     status: int = Field(..., description="status of the service")
     message: str = Field(default="Default message", description="message of the service")
@@ -183,8 +186,11 @@ Delete:
 ```python
 class BaseRequest(BaseModel):
     """Base request with common fields."""
-    request_id: int = Field(default_factory=lambda: int(datetime.now().strftime("%y%m%d%H%M%S%f")[:-4]),
-                            description="identity of the data")
+
+    request_id: int = Field(
+        default_factory=lambda: int(datetime.now().strftime("%y%m%d%H%M%S%f")[:-4]),
+        description="identity of the data",
+    )
 ```
 
 The file should now have the BaseResponse class immediately after the imports.
@@ -217,6 +223,7 @@ Delete:
 ```python
 class BaseResponse(BaseModel):
     """Base response with common fields."""
+
     request_id: int = Field(..., description="identity of the data")
     status: int = Field(..., description="status of the service")
     message: str = Field(default="Default message", description="message of the service")

@@ -159,52 +159,52 @@ git commit -m "refactor: add TypeVar import for decorator types"
 Insert the `_load_step` static method immediately after the `__init__` method (after line 45, before `get` method):
 
 ```python
-    @staticmethod
-    def _load_step(
-        handler: DataHandler,
-        path: Path,
-        table: str,
-        *,
-        cols: Optional[Iterable[str]] = None,
-        filter_: Optional[Callable[[Dict[str, Any]], bool]] = None,
-        limit: Optional[int] = None,
-        strict: bool = True
-    ) -> Callable[[Callable[[Scenario, List[Dict[str, Any]], ...], None]], Callable[..., None]]:
-        """Decorator that wraps a method to auto-fetch data before calling mapping logic.
+@staticmethod
+def _load_step(
+    handler: DataHandler,
+    path: Path,
+    table: str,
+    *,
+    cols: Optional[Iterable[str]] = None,
+    filter_: Optional[Callable[[Dict[str, Any]], bool]] = None,
+    limit: Optional[int] = None,
+    strict: bool = True,
+) -> Callable[[Callable[[Scenario, List[Dict[str, Any]], ...], None]], Callable[..., None]]:
+    """Decorator that wraps a method to auto-fetch data before calling mapping logic.
 
-        The decorated method transforms from `mapping(self, records, **kwargs)` to
-        `wrapper(self, **kwargs)` - the wrapper handles data fetching internally.
+    The decorated method transforms from `mapping(self, records, **kwargs)` to
+    `wrapper(self, **kwargs)` - the wrapper handles data fetching internally.
 
-        Args:
-            handler: DataHandler instance for fetching data
-            path: Path to data directory
-            table: Table/file name
-            cols: Optional column filter
-            filter_: Optional row filter function
-            limit: Optional max records to fetch
-            strict: If True, raise exceptions. If False, log and continue.
+    Args:
+        handler: DataHandler instance for fetching data
+        path: Path to data directory
+        table: Table/file name
+        cols: Optional column filter
+        filter_: Optional row filter function
+        limit: Optional max records to fetch
+        strict: If True, raise exceptions. If False, log and continue.
 
-        Returns:
-            Decorator function that transforms mapping methods
-        """
-        def decorator(mapping: Callable[[Scenario, List[Dict[str, Any]], ...], None]) -> Callable[..., None]:
-            def wrapper(self: Scenario, **kwargs) -> None:
-                try:
-                    records = handler.fetch(
-                        path=path,
-                        table=table,
-                        cols=cols,
-                        filter_=filter_,
-                        limit=limit,
-                        strict=strict
-                    )
-                    mapping(self, records, **kwargs)
-                except Exception:
-                    if strict:
-                        raise
-                    # TODO: Log error and continue
-            return wrapper
-        return decorator
+    Returns:
+        Decorator function that transforms mapping methods
+    """
+
+    def decorator(
+        mapping: Callable[[Scenario, List[Dict[str, Any]], ...], None],
+    ) -> Callable[..., None]:
+        def wrapper(self: Scenario, **kwargs) -> None:
+            try:
+                records = handler.fetch(
+                    path=path, table=table, cols=cols, filter_=filter_, limit=limit, strict=strict
+                )
+                mapping(self, records, **kwargs)
+            except Exception:
+                if strict:
+                    raise
+                # TODO: Log error and continue
+
+        return wrapper
+
+    return decorator
 ```
 
 - [ ] **Step 2: Run tests to verify no syntax errors**
@@ -251,10 +251,11 @@ def test_decorator_transforms_method():
 
     # Create scenario and verify decorated method exists
     scenario = DecoratorTestScenario(1)
-    assert hasattr(scenario, 'load_data')
+    assert hasattr(scenario, "load_data")
     assert callable(scenario.load_data)
     # Decorated method should be callable without records argument
     import inspect
+
     sig = inspect.signature(scenario.load_data)
     # Wrapper accepts **kwargs, so signature should be flexible
     assert len(sig.parameters) == 0  # Only 'self' is in the signature
@@ -309,12 +310,7 @@ def test_decorator_fetches_and_maps():
 
     # Verify handler.fetch was called with correct arguments
     mock_handler.fetch.assert_called_once_with(
-        path=Path("test"),
-        table="data.json",
-        cols=None,
-        filter_=None,
-        limit=None,
-        strict=True
+        path=Path("test"), table="data.json", cols=None, filter_=None, limit=None, strict=True
     )
 
     # Verify data was mapped correctly
@@ -448,7 +444,7 @@ def test_decorator_kwargs_passthrough():
     mock_handler = MagicMock(spec=DataHandler)
     mock_handler.fetch.return_value = [
         {"id": 1, "volume": 100.0, "region": "US"},
-        {"id": 2, "volume": 200.0, "region": "EU"}
+        {"id": 2, "volume": 200.0, "region": "EU"},
     ]
 
     class DecoratorTestScenario(Scenario):
@@ -538,12 +534,16 @@ Old code (delete):
 def test_scenario_load():
     """Test Scenario.load() executes all load steps in order."""
     run_order = []
+
     def make_step(name: str) -> LoadStep:
         handler = MagicMock(spec=DataHandler)
         handler.fetch.return_value = []
+
         def mapping(records):
             run_order.append(name)
+
         return LoadStep(handler=handler, mapping=mapping, path=Path("test"), table=f"{name}.json")
+
     scenario = Scenario(1)
     scenario._load_steps = [make_step("step1"), make_step("step2")]
     scenario.load()
@@ -627,17 +627,32 @@ def test_scenario_integration():
 
             def map_sales_data(records):
                 for r in records:
-                    self.set(TestSalesVolume, (Product, Region), (r["product_id"], r["region_id"]), r["volume"])
-                    self.set(TestPrice, (Product, Region), (r["product_id"], r["region_id"]), r["price"])
+                    self.set(
+                        TestSalesVolume,
+                        (Product, Region),
+                        (r["product_id"], r["region_id"]),
+                        r["volume"],
+                    )
+                    self.set(
+                        TestPrice, (Product, Region), (r["product_id"], r["region_id"]), r["price"]
+                    )
 
-            self._load_steps = [LoadStep(handler=JsonHandler(), mapping=map_sales_data, path=data_dir, table="sales.json", strict=True)]
+            self._load_steps = [
+                LoadStep(
+                    handler=JsonHandler(),
+                    mapping=map_sales_data,
+                    path=data_dir,
+                    table="sales.json",
+                    strict=True,
+                )
+            ]
 
     # Create temporary directory with test data
     with tempfile.TemporaryDirectory() as tmpdir:
         data_path = Path(tmpdir)
         test_data = [
             {"product_id": 1, "region_id": 1, "volume": 100.0, "price": 10.0},
-            {"product_id": 1, "region_id": 2, "volume": 150.0, "price": 12.0}
+            {"product_id": 1, "region_id": 2, "volume": 150.0, "price": 12.0},
         ]
 
         with open(data_path / "sales.json", "w") as f:
@@ -675,8 +690,15 @@ def test_scenario_integration():
         @Scenario._load_step(JsonHandler(), None, "sales.json", strict=True)
         def load_sales(self, records):
             for r in records:
-                self.set(TestSalesVolume, (Product, Region), (r["product_id"], r["region_id"]), r["volume"])
-                self.set(TestPrice, (Product, Region), (r["product_id"], r["region_id"]), r["price"])
+                self.set(
+                    TestSalesVolume,
+                    (Product, Region),
+                    (r["product_id"], r["region_id"]),
+                    r["volume"],
+                )
+                self.set(
+                    TestPrice, (Product, Region), (r["product_id"], r["region_id"]), r["price"]
+                )
 
         def load(self):
             # Path is set at call time since we need the actual data_dir
@@ -689,7 +711,7 @@ def test_scenario_integration():
         data_path = Path(tmpdir)
         test_data = [
             {"product_id": 1, "region_id": 1, "volume": 100.0, "price": 10.0},
-            {"product_id": 1, "region_id": 2, "volume": 150.0, "price": 12.0}
+            {"product_id": 1, "region_id": 2, "volume": 150.0, "price": 12.0},
         ]
 
         with open(data_path / "sales.json", "w") as f:
@@ -706,18 +728,29 @@ def test_scenario_integration():
             @Scenario._load_step(JsonHandler(), Path("placeholder"), "sales.json", strict=True)
             def load_sales(self, records):
                 for r in records:
-                    self.set(TestSalesVolume, (Product, Region), (r["product_id"], r["region_id"]), r["volume"])
-                    self.set(TestPrice, (Product, Region), (r["product_id"], r["region_id"]), r["price"])
+                    self.set(
+                        TestSalesVolume,
+                        (Product, Region),
+                        (r["product_id"], r["region_id"]),
+                        r["volume"],
+                    )
+                    self.set(
+                        TestPrice, (Product, Region), (r["product_id"], r["region_id"]), r["price"]
+                    )
 
             def load(self):
                 # Patch the handler's path for this test
                 import unittest.mock
+
                 original_fetch = JsonHandler.fetch
+
                 def patched_fetch(self, **kwargs):
-                    kwargs['path'] = self._data_dir if hasattr(self, '_data_dir') else Path(kwargs['path'])
+                    kwargs["path"] = (
+                        self._data_dir if hasattr(self, "_data_dir") else Path(kwargs["path"])
+                    )
                     return original_fetch(**kwargs)
 
-                with unittest.mock.patch('dal.JsonHandler.fetch', patched_fetch):
+                with unittest.mock.patch("dal.JsonHandler.fetch", patched_fetch):
                     self.load_sales()
 
         scenario = TestScenarioFixed("test-001", data_path)
@@ -752,7 +785,7 @@ def test_scenario_integration():
     # Use current working directory for test (simpler approach)
     test_data = [
         {"product_id": 1, "region_id": 1, "volume": 100.0, "price": 10.0},
-        {"product_id": 1, "region_id": 2, "volume": 150.0, "price": 12.0}
+        {"product_id": 1, "region_id": 2, "volume": 150.0, "price": 12.0},
     ]
 
     # Create test data file
@@ -766,8 +799,15 @@ def test_scenario_integration():
             @Scenario._load_step(JsonHandler(), Path("."), "test_sales.json", strict=True)
             def load_sales(self, records):
                 for r in records:
-                    self.set(TestSalesVolume, (Product, Region), (r["product_id"], r["region_id"]), r["volume"])
-                    self.set(TestPrice, (Product, Region), (r["product_id"], r["region_id"]), r["price"])
+                    self.set(
+                        TestSalesVolume,
+                        (Product, Region),
+                        (r["product_id"], r["region_id"]),
+                        r["volume"],
+                    )
+                    self.set(
+                        TestPrice, (Product, Region), (r["product_id"], r["region_id"]), r["price"]
+                    )
 
             def load(self):
                 self.load_sales()

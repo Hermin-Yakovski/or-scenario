@@ -84,7 +84,9 @@ def get(self, param: Parameter, dim: Tuple[Dimension, ...], ix: Tuple[int, ...])
 Set a single value in the Register.
 
 ```python
-def set(self, param: Parameter, dim: Tuple[Dimension, ...], ix: Tuple[int, ...], value: Any) -> None:
+def set(
+    self, param: Parameter, dim: Tuple[Dimension, ...], ix: Tuple[int, ...], value: Any
+) -> None:
     self._data[param][dim][ix] = value
 ```
 
@@ -142,7 +144,7 @@ def run(self) -> None:
         cols=self.cols,
         filter_=self.filter_,
         limit=self.limit,
-        strict=self.strict
+        strict=self.strict,
     )
     self.mapping(records)
 ```
@@ -168,16 +170,17 @@ Region = Dimension("Region", "区域", "REG")
 SalesVolume = Parameter(1, "sales_volume", "销量", float)
 Price = Parameter(2, "price", "价格", float)
 
+
 class SalesScenario(Scenario):
     def __init__(self, version_id: Hashable):
         super().__init__(version_id)
 
         def map_sales_data(records: List[Dict[str, Any]]) -> None:
             for r in records:
-                self.set(SalesVolume, (Product, Region),
-                        (r["product_id"], r["region_id"]), r["volume"])
-                self.set(Price, (Product, Region),
-                        (r["product_id"], r["region_id"]), r["price"])
+                self.set(
+                    SalesVolume, (Product, Region), (r["product_id"], r["region_id"]), r["volume"]
+                )
+                self.set(Price, (Product, Region), (r["product_id"], r["region_id"]), r["price"])
 
         self._load_steps = [
             LoadStep(
@@ -185,7 +188,7 @@ class SalesScenario(Scenario):
                 mapping=map_sales_data,
                 path=Path("data") / str(version_id),
                 table="sales.json",
-                strict=True
+                strict=True,
             )
         ]
 ```
@@ -204,6 +207,7 @@ scenario.validate()
 
 # Configure and execute algorithm
 from or_algo import Algorithm
+
 scenario.set_algorithm(Algorithm)
 scenario.exec_algorithm()
 ```

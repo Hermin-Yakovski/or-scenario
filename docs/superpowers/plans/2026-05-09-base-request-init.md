@@ -469,6 +469,7 @@ class LoadTestScenario(Scenario):
         self.load_step1()
         self.load_step2()
 
+
 scenario = LoadTestScenario(1)
 ```
 
@@ -487,6 +488,7 @@ class LoadTestScenario(Scenario):
     def load(self):
         self.load_step1()
         self.load_step2()
+
 
 scenario = LoadTestScenario()
 ```
@@ -540,11 +542,14 @@ class TestScenario(Scenario):
     @Scenario._load_step(JsonHandler(), Path("."), "test_sales.json", strict=True)
     def load_sales(self, records):
         for r in records:
-            self.set(TestSalesVolume, (Product, Region), (r["product_id"], r["region_id"]), r["volume"])
+            self.set(
+                TestSalesVolume, (Product, Region), (r["product_id"], r["region_id"]), r["volume"]
+            )
             self.set(TestPrice, (Product, Region), (r["product_id"], r["region_id"]), r["price"])
 
     def load(self):
         self.load_sales()
+
 
 scenario = TestScenario("test-001")
 ```
@@ -556,11 +561,14 @@ class TestScenario(Scenario):
     @Scenario._load_step(JsonHandler(), Path("."), "test_sales.json", strict=True)
     def load_sales(self, records):
         for r in records:
-            self.set(TestSalesVolume, (Product, Region), (r["product_id"], r["region_id"]), r["volume"])
+            self.set(
+                TestSalesVolume, (Product, Region), (r["product_id"], r["region_id"]), r["volume"]
+            )
             self.set(TestPrice, (Product, Region), (r["product_id"], r["region_id"]), r["price"])
 
     def load(self):
         self.load_sales()
+
 
 scenario = TestScenario()
 ```
@@ -660,7 +668,7 @@ Lines 369-373 test that `_request` is initialized to None. Update:
 def test_scenario_request_attribute():
     """Test Scenario has _request attribute initialized to None."""
     scenario = Scenario(1)
-    assert hasattr(scenario, '_request')
+    assert hasattr(scenario, "_request")
     assert scenario._request is None
 ```
 
@@ -670,7 +678,7 @@ To:
 def test_scenario_request_attribute():
     """Test Scenario has _request attribute initialized to BaseRequest."""
     scenario = Scenario()
-    assert hasattr(scenario, '_request')
+    assert hasattr(scenario, "_request")
     assert isinstance(scenario._request, BaseRequest)
 ```
 
@@ -783,6 +791,7 @@ class MyScenario(Scenario):
     def __init__(self):
         super().__init__()
         # ... rest of init
+
 
 scenario = MyScenario()
 ```

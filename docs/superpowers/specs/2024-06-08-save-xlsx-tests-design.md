@@ -13,9 +13,15 @@ Add comprehensive tests for the existing `Scenario.save_xlsx()` method to verify
 **`or_scenario/scenario.py:318-321`:**
 ```python
 def save_xlsx(self, path: Path, display_cn: bool = False):
-    with pd.ExcelWriter(path / f'{type(self).__name__}_version_{self._version_id}.xlsx', engine='openpyxl') as writer:
+    with pd.ExcelWriter(
+        path / f"{type(self).__name__}_version_{self._version_id}.xlsx", engine="openpyxl"
+    ) as writer:
         for dimension, df in self.as_frames(display_cn).items():
-            df.to_excel(writer, sheet_name='_'.join(d.name_cn if display_cn else d.name for d in dimension), index=False)
+            df.to_excel(
+                writer,
+                sheet_name="_".join(d.name_cn if display_cn else d.name for d in dimension),
+                index=False,
+            )
 ```
 
 The method:

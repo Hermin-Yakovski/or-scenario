@@ -1,43 +1,51 @@
 # or_scenario/scenario.py
 from __future__ import annotations
-from typing import TYPE_CHECKING
 
-from register import Dimension, Id, Parameter, Register, Index
-from register.register import Method
-from register.exception import DimensionError, ValidationError
-from typing import get_origin, get_args, Any
+import builtins
 import logging
-import pandas as pd
+from typing import TYPE_CHECKING, Any, get_args, get_origin
 
-from .orm import generate_sol_table, generate_fact_table
+import pandas as pd
+from register import (
+    Dimension,
+    DimensionError,
+    Id,
+    Index,
+    Metric,
+    Register,
+    ValidationError,
+)
+
+from .orm import generate_fact_table, generate_sol_table
 from .schema import BaseRequest
 
-logger = logging.getLogger("or_scenario")
-
 if TYPE_CHECKING:
+    from collections.abc import Callable, Hashable, Iterable
     from pathlib import Path
 
     from data_access_layer import DataHandler
     from or_algo import Algorithm
+    from register import RegisterKey
     from sqlalchemy.orm import Session
-    from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Set, Tuple, Type
 
     from .schema import BaseResponse
+
+logger = logging.getLogger("or_scenario")
 
 
 class Scenario:
     """Base class for domain-specific OR scenarios."""
 
     _version_id: Hashable
-    _algorithm: Optional[Algorithm]
-    _data: Register[Parameter]
-    _request: Optional[BaseRequest]
+    _algorithm: Algorithm | None
+    _data: Register[Any]
+    _request: BaseRequest | None
 
-    def __init__(self, request: Optional[BaseRequest] = None) -> None:
+    def __init__(self, request: BaseRequest | None = None) -> None:
         self._request = request or BaseRequest()
         self._version_id = self._request.request_id
         self._algorithm = None
-        self._data = Register[Parameter]()
+        self._data = Register()
 
     @staticmethod
     def _load_step(
@@ -45,11 +53,11 @@ class Scenario:
         path: Path,
         table: str,
         *,
-        cols: Optional[Iterable[str]] = None,
-        filter_: Optional[Callable[[Dict[str, Any]], bool]] = None,
-        limit: Optional[int] = None,
-        strict: bool = True
-    ) -> Callable[[Callable[[Scenario, List[Dict[str, Any]]], None]], Callable[..., None]]:
+        cols: Iterable[str] | None = None,
+        filter_: Callable[[dict[str, Any]], bool] | None = None,
+        limit: int | None = None,
+        strict: bool = True,
+    ) -> Callable[[Callable[[Scenario, list[dict[str, Any]]], None]], Callable[..., None]]:
         """Decorator that wraps a method to auto-fetch data before calling mapping logic.
 
         The decorated method transforms from `mapping(self, records, **kwargs)` to
@@ -67,7 +75,10 @@ class Scenario:
         Returns:
             Decorator function that transforms mapping methods
         """
-        def decorator(mapping: Callable[[Scenario, List[Dict[str, Any]]], None]) -> Callable[..., None]:
+
+        def decorator(
+            mapping: Callable[[Scenario, list[dict[str, Any]]], None],
+        ) -> Callable[..., None]:
             def wrapper(self: Scenario, **kwargs: Any) -> None:
                 try:
                     records = handler.fetch(
@@ -76,17 +87,19 @@ class Scenario:
                         cols=cols,
                         filter_=filter_,
                         limit=limit,
-                        strict=strict
+                        strict=strict,
                     )
                     mapping(self, records, **kwargs)
                 except Exception:
                     if strict:
                         raise
                     # TODO: Log error and continue
+
             return wrapper
+
         return decorator
 
-    def get(self, param: Parameter, dim: Tuple[Dimension, ...], ix: Tuple[int, ...]) -> Any:
+    def get(self, param: RegisterKey, dim: tuple[Dimension, ...], ix: tuple[int, ...]) -> Any:
         """Get a value from the scenario data.
 
         Args:
@@ -99,7 +112,9 @@ class Scenario:
         """
         return self._data[param][dim][ix]
 
-    def set(self, param: Parameter, dim: Tuple[Dimension, ...], ix: Tuple[int, ...], value: Any) -> None:
+    def set(
+        self, param: RegisterKey, dim: tuple[Dimension, ...], ix: tuple[int, ...], value: Any
+    ) -> None:
         """Set a value in the scenario data.
 
         Args:
@@ -110,7 +125,7 @@ class Scenario:
         """
         self._data[param][dim][ix] = value
 
-    def set_algorithm(self, algo: Type[Algorithm], *args: Any, **kwargs: Any) -> None:
+    def set_algorithm(self, algo: type[Algorithm], *args: Any, **kwargs: Any) -> None:
         """Set the algorithm for this scenario.
 
         Args:
@@ -130,7 +145,7 @@ class Scenario:
             raise RuntimeError("Algorithm not set. Call set_algorithm() first.")
         self._algorithm.solve(self._data)
 
-    def load(self, session: Optional[Session] = None) -> None:
+    def load(self, session: Session | None = None) -> None:
         """Load scenario data from database or files.
 
         Args:
@@ -143,10 +158,11 @@ class Scenario:
         """
         raise NotImplementedError("Subclasses must implement load()")
 
-    def dump(self,
+    def dump(
+        self,
         session: Session,
-        params: Set[Parameter],
-        dimension: Tuple[Dimension, ...],
+        params: builtins.set[RegisterKey],
+        dimension: tuple[Dimension, ...],
         fact: bool = False,
     ) -> None:
         """Dump parameters to sol or fact table.
@@ -165,11 +181,13 @@ class Scenario:
                   If False, dump to sol table using version_id column.
 
         """
-        identifier: str = 'snapshot_id' if fact else 'version_id'
+        identifier: str = "snapshot_id" if fact else "version_id"
 
         # Generate the Sol table class dynamically
         dimension_names = [dim.name for dim in dimension]
-        table =  generate_fact_table(*dimension_names) if fact else generate_sol_table(*dimension_names)
+        table = (
+            generate_fact_table(*dimension_names) if fact else generate_sol_table(*dimension_names)
+        )
 
         # Delete existing records with this version_id using ORM
         session.query(table).filter(getattr(table, identifier) == self._version_id).delete()
@@ -177,11 +195,16 @@ class Scenario:
         # Collect all records to insert
         records = []
         for param in params:
-            for index in self._data.select(param, dimension):
+            if param not in self._data:
+                continue
+            index_space = self._data[param][dimension]
+            if not len(index_space):
+                continue
+            for index in index_space.keys():  # noqa: SIM118
                 row = {
                     "parameter_id": param.id,
                     identifier: self._version_id,
-                    "quantity": self._data[param][dimension][index],
+                    "quantity": index_space[index],
                 }
                 for i, dim in enumerate(dimension):
                     row[f"{dim.name.lower()}_id"] = index[i]
@@ -190,7 +213,7 @@ class Scenario:
         if records:
             session.add_all(records)
 
-    def validate(self, param: Parameter = Id) -> None:
+    def validate(self, param: RegisterKey = Id) -> None:
         """Validate scenario data.
 
         Validates all parameters in self._data against the reference dimension
@@ -208,7 +231,7 @@ class Scenario:
 
         for key in self._data:
             for dimension in self._data[key]:
-                for index in self._data[key][dimension]:
+                for index in self._data[key][dimension].keys():  # noqa: SIM118
                     # Validate index length matches dimension length
                     if len(dimension) != len(index):
                         msg = (
@@ -219,7 +242,7 @@ class Scenario:
 
                     # Validate index exists in reference dimension
                     for d, ix in zip(dimension, index):
-                        if not ((ix,) in dim[d,] or isinstance(ix, Method) or d == Index):
+                        if not ((ix,) in dim[d,] or (d is Metric) or d == Index):
                             msg = (
                                 f"[v{key.id}] {key}{dimension}{index}: "
                                 f"index {ix} does not match any index of dimension {d.name}"
@@ -246,7 +269,7 @@ class Scenario:
 
                         for v in value:
                             if isinstance(arg, Dimension):
-                                if (v,) not in dim[arg,]:
+                                if (v,) not in dim[arg,]:  # type: ignore[operator]
                                     msg = (
                                         f"[v{key.id}] {key}{dimension}{index}: "
                                         f"value {v} does not match any index of dimension {arg.name}"
@@ -261,7 +284,7 @@ class Scenario:
                                 raise ValidationError(msg)
 
                     elif isinstance(key.vtype, Dimension):
-                        if (value,) not in dim[key.vtype,]:
+                        if (value,) not in dim[key.vtype,]:  # type: ignore[operator]
                             msg = (
                                 f"[v{key.id}] {key}{dimension}{index}: "
                                 f"value {value} does not match any index of dimension {key.vtype.name}"
@@ -299,15 +322,17 @@ class Scenario:
                     for index in rows[dimension]:
                         rows[dimension][index].append(None)
                     columns[dimension].append(col)
-                for index, value in self._data[key][dimension].items():
+                index_space = self._data[key][dimension]
+                for index in index_space.keys():  # noqa: SIM118
+                    value = index_space[index]
                     if index not in rows[dimension]:
                         rows[dimension][index] = [None for _ in columns[dimension]]
                     rows[dimension][index][-1] = value
 
-        for dimension in columns:
+        for dimension, col_list in columns.items():
             dataframe_columns: list[str] = [
                 d.name_cn if display_cn else d.name for d in dimension
-            ] + columns[dimension]
+            ] + col_list
             dataframe_rows: list[list[Any]] = []
             for index in rows[dimension]:
                 dataframe_rows.append([i for i in index] + rows[dimension][index])
@@ -327,16 +352,17 @@ class Scenario:
         """
         frames = self.as_frames(display_cn)
 
-        with pd.ExcelWriter(path / f'{type(self).__name__}_version_{self._version_id}.xlsx', engine='openpyxl') as writer:
+        with pd.ExcelWriter(
+            path / f"{type(self).__name__}_version_{self._version_id}.xlsx", engine="openpyxl"
+        ) as writer:
             if not frames:
                 # Handle empty scenario - create empty sheet
                 pd.DataFrame().to_excel(writer, sheet_name="empty", index=False)
             else:
                 # Create one sheet per dimension combination
                 for dimension, df in frames.items():
-                    sheet_name = '_'.join(d.name_cn if display_cn else d.name for d in dimension)
+                    sheet_name = "_".join(d.name_cn if display_cn else d.name for d in dimension)
                     df.to_excel(writer, sheet_name=sheet_name, index=False)
-
 
     def response(self, *args: Any, **kwargs: Any) -> BaseResponse:
         """Package results into BaseResponse. Subclasses must implement."""
@@ -351,9 +377,9 @@ class Scenario:
         Returns:
             True if identifier is safe (alphanumeric and underscores only)
         """
-        return bool(identifier) and all(c.isalnum() or c == '_' for c in identifier)
+        return bool(identifier) and all(c.isalnum() or c == "_" for c in identifier)
 
-    def _get_sol_table_name(self, dimension: Tuple[Dimension, ...]) -> str:
+    def _get_sol_table_name(self, dimension: tuple[Dimension, ...]) -> str:
         """Generate sol table name from dimension tuple.
 
         Table name follows convention: sol_{dim1}_{dim2}...
@@ -371,5 +397,7 @@ class Scenario:
         sorted_dims = sorted(dimension, key=lambda d: d.name.lower())
         table_name = f"sol_{'_'.join(d.name.lower() for d in sorted_dims)}"
         if not self._validate_sql_identifier(table_name):
-            raise ValueError(f"Invalid table name '{table_name}': dimension names must be alphanumeric")
+            raise ValueError(
+                f"Invalid table name '{table_name}': dimension names must be alphanumeric"
+            )
         return table_name

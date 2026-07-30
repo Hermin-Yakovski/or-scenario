@@ -41,7 +41,7 @@ def _load_step(
     cols: Optional[Iterable[str]] = None,
     filter_: Optional[Callable[[Dict[str, Any]], bool]] = None,
     limit: Optional[int] = None,
-    strict: bool = True
+    strict: bool = True,
 ) -> Callable[[Callable[[Scenario, List[Dict[str, Any]], ...], None]], Callable[..., None]]:
     """Decorator that wraps a method to auto-fetch data before calling mapping logic.
 
@@ -60,23 +60,23 @@ def _load_step(
     Returns:
         Decorator function that transforms mapping methods
     """
-    def decorator(mapping: Callable[[Scenario, List[Dict[str, Any]], ...], None]) -> Callable[..., None]:
+
+    def decorator(
+        mapping: Callable[[Scenario, List[Dict[str, Any]], ...], None],
+    ) -> Callable[..., None]:
         def wrapper(self: Scenario, **kwargs) -> None:
             try:
                 records = handler.fetch(
-                    path=path,
-                    table=table,
-                    cols=cols,
-                    filter_=filter_,
-                    limit=limit,
-                    strict=strict
+                    path=path, table=table, cols=cols, filter_=filter_, limit=limit, strict=strict
                 )
                 mapping(self, records, **kwargs)
             except Exception:
                 if strict:
                     raise
                 # TODO: Log error and continue
+
         return wrapper
+
     return decorator
 ```
 
@@ -182,8 +182,8 @@ class MyScenario(Scenario):
             self.set(ExtraData, (Product,), (r["id"],), r["extra"])
 
     def load(self):
-        self.load_sales()      # If this fails, load() raises immediately
-        self.load_optional()   # Only runs if load_sales() succeeded
+        self.load_sales()  # If this fails, load() raises immediately
+        self.load_optional()  # Only runs if load_sales() succeeded
 ```
 
 ## Error Handling

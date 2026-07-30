@@ -52,17 +52,18 @@ or_scenario/
 from typing import Optional
 from sqlalchemy.orm import Session
 
+
 class Scenario:
     # ... existing attributes unchanged ...
-    
+
     def load(self, session: Session) -> None:
         """Load scenario data from database.
-        
+
         Caller manages transaction boundaries.
-        
+
         Args:
             session: SQLAlchemy session with active transaction
-            
+
         Raises:
             NotImplementedError: Subclass must override
         """
@@ -84,31 +85,35 @@ DimDistrict = generate_dimension_table("District")
 DimOwner = generate_dimension_table("Owner")
 FactDistrictOwner = generate_fact_table("District", "Owner")
 
+
 class MyScenario(Scenario):
     def load(self, session: Session) -> None:
         """Load from database and files."""
         # File-based (existing DataHandler pattern)
         self._load_from_files(handler, path)
-        
+
         # Database-based
         self._load_districts(session)
         self._load_facts(session)
-    
+
     def _load_districts(self, session: Session) -> None:
         districts = session.execute(select(DimDistrict)).scalars().all()
         for d in districts:
             self.set(SomeParam, (District,), (d.id,), d.value)
-    
+
     def _load_facts(self, session: Session) -> None:
-        facts = session.execute(
-            select(FactDistrictOwner).where(
-                FactDistrictOwner.snapshot_id == self._request.request_id
+        facts = (
+            session.execute(
+                select(FactDistrictOwner).where(
+                    FactDistrictOwner.snapshot_id == self._request.request_id
+                )
             )
-        ).scalars().all()
-        
+            .scalars()
+            .all()
+        )
+
         for f in facts:
-            self.set(SalesVolume, (District, Owner), 
-                    (f.district_id, f.owner_id), f.quantity)
+            self.set(SalesVolume, (District, Owner), (f.district_id, f.owner_id), f.quantity)
 ```
 
 ### orm/ Package
@@ -190,27 +195,28 @@ DimProduct = generate_dimension_table("Product")
 DimRegion = generate_dimension_table("Region")
 FactSales = generate_fact_table("Product", "Region")
 
+
 class SalesScenario(Scenario):
     def load(self, session: Session) -> None:
         # Load dimensions first
         products = session.execute(select(DimProduct)).scalars().all()
         regions = session.execute(select(DimRegion)).scalars().all()
-        
+
         # Load facts for this snapshot
-        facts = session.execute(
-            select(FactSales).where(
-                FactSales.snapshot_id == self._request.request_id
+        facts = (
+            session.execute(
+                select(FactSales).where(FactSales.snapshot_id == self._request.request_id)
             )
-        ).scalars().all()
-        
+            .scalars()
+            .all()
+        )
+
         # Map to Register
         for fact in facts:
             self.set(
-                SalesVolume, 
-                (Product, Region),
-                (fact.product_id, fact.region_id),
-                fact.quantity
+                SalesVolume, (Product, Region), (fact.product_id, fact.region_id), fact.quantity
             )
+
 
 # Usage
 engine = create_engine("sqlite:///or.db")
