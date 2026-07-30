@@ -39,12 +39,15 @@ from typing import Set, Tuple
 from sqlalchemy.orm import Session
 from register import Dimension, Parameter
 
+
 class Scenario:
-    def dump(self,
-             session: Session,
-             params: Set[Parameter],
-             dimension: Tuple[Dimension, ...],
-             fact: bool = False) -> None:
+    def dump(
+        self,
+        session: Session,
+        params: Set[Parameter],
+        dimension: Tuple[Dimension, ...],
+        fact: bool = False,
+    ) -> None:
         """Dump parameters to sol or fact table.
 
         Deletes all existing records with version_id/snapshot_id = self._version_id,
@@ -131,10 +134,12 @@ Product = Dimension("Product", "产品", "PROD")
 Region = Dimension("Region", "区域", "REG")
 SalesVolume = Parameter(1, "sales_volume", "销量", float)
 
+
 class SalesScenario(Scenario):
     def load(self, session: Session = None) -> None:
         # Load from database or files...
         pass
+
 
 # Workflow
 engine = create_engine("sqlite:///or.db")
@@ -151,12 +156,7 @@ with SessionLocal() as session:
         scenario.exec_algorithm()
 
         # Dump results to sol table (version_id column)
-        scenario.dump(
-            session,
-            {SalesVolume},
-            (Product, Region),
-            fact=False
-        )
+        scenario.dump(session, {SalesVolume}, (Product, Region), fact=False)
 ```
 
 ## File Structure

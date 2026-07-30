@@ -49,10 +49,14 @@ Integrate Pydantic models into the `or-scenario` package to provide structured c
 from pydantic import BaseModel, Field
 from datetime import datetime
 
+
 class BaseRequest(BaseModel):
     """Base request with common fields"""
-    request_id: int = Field(default_factory=lambda: int(datetime.now().strftime("%y%m%d%H%M%S%f")),
-                            description="identity of the data")
+
+    request_id: int = Field(
+        default_factory=lambda: int(datetime.now().strftime("%y%m%d%H%M%S%f")),
+        description="identity of the data",
+    )
 ```
 
 ### BaseResponse
@@ -60,6 +64,7 @@ class BaseRequest(BaseModel):
 ```python
 class BaseResponse(BaseModel):
     """Base response with common fields"""
+
     request_id: int = Field(..., description="identity of the data")
     status: int = Field(..., description="status of the service")
     message: str = Field(default="Default message", description="message of the service")
@@ -72,6 +77,7 @@ class BaseResponse(BaseModel):
 ```python
 # or_scenario/scenario.py
 from typing import Any, Optional
+
 
 class Scenario:
     # Existing attributes
@@ -122,20 +128,26 @@ from pathlib import Path
 from typing import Dict
 from datetime import datetime
 
+
 class DomainRequest(BaseRequest):
     """Domain-specific configuration"""
+
     data_path: Path = Field(..., description="Path to data directory")
     algorithm_type: str = Field(default="optimizer", description="Algorithm type")
     tolerance: float = Field(default=1e-6, description="Solver tolerance")
 
+
 class DomainResult(BaseModel):
     """Actual computation results"""
+
     objective_value: float
     solution: Dict[str, float]
     iterations: int
 
+
 class DomainResponse(BaseResponse):
     """Domain-specific response envelope"""
+
     response: DomainResult  # Override Any with specific type
 ```
 
@@ -148,6 +160,7 @@ from dal import JsonHandler
 from .config import DomainRequest, DomainResponse, DomainResult
 from .dimension import Product, Region
 from .parameter import SalesVolume, Price
+
 
 class DomainScenario(Scenario):
     def __init__(self, request: BaseRequest):
@@ -165,29 +178,28 @@ class DomainScenario(Scenario):
                 handler=JsonHandler(),
                 mapping=self._map_sales_data,
                 path=self._request.data_path,
-                table="sales.json"
+                table="sales.json",
             )
         ]
 
     def _map_sales_data(self, records):
         """Mapping closure with access to self"""
         for r in records:
-            self.set(SalesVolume, (Product, Region),
-                    (r["product_id"], r["region_id"]), r["volume"])
+            self.set(SalesVolume, (Product, Region), (r["product_id"], r["region_id"]), r["volume"])
 
     def response(self, include_debug: bool = False) -> BaseResponse:
         """Package results into response"""
         result = DomainResult(
             objective_value=self._algorithm.objective_value,
             solution=self._extract_solution(),
-            iterations=self._algorithm.iterations
+            iterations=self._algorithm.iterations,
         )
 
         return DomainResponse(
             request_id=self._request.request_id,
             status=200,
             message="Optimization completed",
-            response=result
+            response=result,
         )
 
     def _extract_solution(self) -> Dict[str, float]:
@@ -202,11 +214,7 @@ class DomainScenario(Scenario):
 
 ```python
 # Create request
-request = DomainRequest(
-    data_path=Path("data/run-001"),
-    algorithm_type="optimizer",
-    tolerance=1e-8
-)
+request = DomainRequest(data_path=Path("data/run-001"), algorithm_type="optimizer", tolerance=1e-8)
 
 # Execute workflow
 try:
@@ -221,16 +229,12 @@ try:
 except ValueError as e:
     # Build error response
     response = DomainResponse(
-        request_id=request.request_id,
-        status=400,
-        message=f"Validation error: {e}"
+        request_id=request.request_id, status=400, message=f"Validation error: {e}"
     )
 except Exception as e:
     # Handle other errors
     response = DomainResponse(
-        request_id=request.request_id,
-        status=500,
-        message=f"Internal error: {e}"
+        request_id=request.request_id, status=500, message=f"Internal error: {e}"
     )
 ```
 
@@ -338,10 +342,7 @@ __version__ = "0.1.0"
 
 ```python
 def test_domain_scenario_with_pydantic():
-    request = DomainRequest(
-        data_path=Path("test/data"),
-        algorithm_type="optimizer"
-    )
+    request = DomainRequest(data_path=Path("test/data"), algorithm_type="optimizer")
 
     scenario = DomainScenario(request)
     scenario.load()

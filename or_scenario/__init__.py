@@ -1,10 +1,9 @@
 """or-scenario: Template framework for Operations Research workflows."""
 
-from .schema import BaseRequest, BaseResponse
-from .scenario import Scenario
-
 # Re-export orm proxy for convenience
 from . import orm
+from .scenario import Scenario
+from .schema import BaseRequest, BaseResponse
 
-__all__ = ["Scenario", "BaseRequest", "BaseResponse", "orm"]
+__all__ = ["BaseRequest", "BaseResponse", "Scenario", "orm"]
 __version__ = "0.3.0"

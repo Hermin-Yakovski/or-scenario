@@ -23,10 +23,12 @@ Product = Dimension("Product", "产品", "PROD")
 Region = Dimension("Region", "区域", "REG")
 SalesVolume = Parameter(1, "sales_volume", "销量", float)
 
+
 class SalesScenario(Scenario):
     def load(self, session: Session = None) -> None:
         # Load data...
         pass
+
 
 # Complete workflow
 engine = create_engine("sqlite:///or.db")
@@ -42,24 +44,14 @@ with SessionLocal() as session:
     scenario.exec_algorithm()
 
     # 3. Dump results to database
-    scenario.dump(
-        session,
-        {SalesVolume},
-        (Product, Region),
-        (1, 2)
-    )
+    scenario.dump(session, {SalesVolume}, (Product, Region), (1, 2))
 ```
 
 ## Dumping Multiple Parameters
 
 ```python
 # Dump multiple results at once
-scenario.dump(
-    session,
-    {SalesVolume, SalesRevenue, Margin},
-    (Product, Region),
-    (1, 2)
-)
+scenario.dump(session, {SalesVolume, SalesRevenue, Margin}, (Product, Region), (1, 2))
 ```
 
 ## Transaction Safety

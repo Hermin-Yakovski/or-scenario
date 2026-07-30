@@ -35,6 +35,7 @@ Region = Dimension("Region", "区域", "REG")
 # Define domain-specific parameters
 SalesVolume = Parameter(1, "sales_volume", "销量", float)
 
+
 class SalesScenario(Scenario):
     def load(self, session: Session) -> None:
         # Load dimensions
@@ -42,19 +43,18 @@ class SalesScenario(Scenario):
         regions = session.execute(select(DimRegion)).scalars().all()
 
         # Load facts for this snapshot
-        facts = session.execute(
-            select(FactSales).where(
-                FactSales.snapshot_id == self._request.request_id
+        facts = (
+            session.execute(
+                select(FactSales).where(FactSales.snapshot_id == self._request.request_id)
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         # Map to Register
         for fact in facts:
             self.set(
-                SalesVolume,
-                (Product, Region),
-                (fact.product_id, fact.region_id),
-                fact.quantity
+                SalesVolume, (Product, Region), (fact.product_id, fact.region_id), fact.quantity
             )
 ```
 

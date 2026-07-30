@@ -54,11 +54,12 @@ def dump(self,
 ### Implementation
 
 ```python
-def dump(self,
-         session: "Session",
-         params: Set[Parameter],
-         dimension: Tuple[Dimension, ...],
-         fact: bool = False,
+def dump(
+    self,
+    session: "Session",
+    params: Set[Parameter],
+    dimension: Tuple[Dimension, ...],
+    fact: bool = False,
 ) -> None:
     """Dump parameters to sol or fact table.
 
@@ -75,7 +76,7 @@ def dump(self,
         fact: If True, dump to fact table using snapshot_id column.
               If False, dump to sol table using version_id column.
     """
-    identifier: str = 'snapshot_id' if fact else 'version_id'
+    identifier: str = "snapshot_id" if fact else "version_id"
 
     # Generate the table class dynamically
     dimension_names = [dim.name for dim in dimension]
@@ -133,7 +134,7 @@ with SessionLocal() as session:
             session,
             {SalesVolume},
             (Product, Region),
-            fact=False  # Default
+            fact=False,  # Default
         )
 ```
 
@@ -146,7 +147,7 @@ with SessionLocal() as session:
             session,
             {SalesVolume},
             (Product, Region),
-            fact=True  # Uses fact table and snapshot_id
+            fact=True,  # Uses fact table and snapshot_id
         )
 ```
 

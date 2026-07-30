@@ -1,7 +1,6 @@
 """Tests for orm proxy - isolated to avoid ortools dependency issues."""
 
 import importlib.util
-import sys
 from pathlib import Path
 
 

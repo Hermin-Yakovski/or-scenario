@@ -167,7 +167,7 @@ def test_loadstep_init():
         cols=["col1", "col2"],
         filter_=lambda x: True,
         limit=100,
-        strict=True
+        strict=True,
     )
 
     assert step.handler is handler
@@ -251,17 +251,16 @@ git commit -m "feat: add LoadStep class"
 from unittest.mock import MagicMock
 from register import Dimension, Index, Parameter
 
+
 def test_loadstep_run():
     """Test LoadStep.run() fetches data and calls mapping."""
     # Create mock handler
     handler = MagicMock(spec=DataHandler)
-    handler.fetch.return_value = [
-        {"id": 1, "value": 10},
-        {"id": 2, "value": 20}
-    ]
+    handler.fetch.return_value = [{"id": 1, "value": 10}, {"id": 2, "value": 20}]
 
     # Create mapping that tracks calls
     mapping_calls = []
+
     def track_mapping(records: List[Dict[str, Any]]) -> None:
         mapping_calls.append(records)
 
@@ -270,19 +269,14 @@ def test_loadstep_run():
         mapping=track_mapping,
         path=Path("test/path"),
         table="test.json",
-        strict=True
+        strict=True,
     )
 
     step.run()
 
     # Verify handler.fetch was called correctly
     handler.fetch.assert_called_once_with(
-        path=Path("test/path"),
-        table="test.json",
-        cols=None,
-        filter_=None,
-        limit=None,
-        strict=True
+        path=Path("test/path"), table="test.json", cols=None, filter_=None, limit=None, strict=True
     )
 
     # Verify mapping was called with fetched data
@@ -310,7 +304,7 @@ class LoadStep:
             cols=self.cols,
             filter_=self.filter_,
             limit=self.limit,
-            strict=self.strict
+            strict=self.strict,
         )
         self.mapping(records)
 ```
@@ -340,6 +334,7 @@ git commit -m "feat: add LoadStep.run() method"
 ```python
 # tests/test_scenario.py
 from or_scenario import Scenario
+
 
 def test_scenario_init():
     """Test Scenario can be initialized with version_id."""
@@ -415,6 +410,7 @@ from register import Dimension, Index, Parameter
 Product = Dimension("Product", "产品", "PROD")
 SalesVolume = Parameter(1, "sales_volume", "销量", float)
 
+
 def test_scenario_get():
     """Test get() retrieves values from Register."""
     scenario = Scenario(1)
@@ -483,7 +479,9 @@ Expected: FAIL with "Scenario has no attribute 'set'" or AttributeError
 
 ```python
 # or_scenario/scenario.py - add to Scenario class
-def set(self, param: Parameter, dim: Tuple[Dimension, ...], ix: Tuple[int, ...], value: Any) -> None:
+def set(
+    self, param: Parameter, dim: Tuple[Dimension, ...], ix: Tuple[int, ...], value: Any
+) -> None:
     """Set a single value in the Register."""
     self._data[param][dim][ix] = value
 ```
@@ -515,6 +513,7 @@ git commit -m "feat: add Scenario.set() method"
 from or_algo import Algorithm
 from typing import Any, Dict
 
+
 def test_scenario_set_algorithm():
     """Test set_algorithm() instantiates and stores an Algorithm."""
     scenario = Scenario(1)
@@ -536,6 +535,7 @@ Expected: FAIL with "Scenario has no attribute 'set_algorithm'" or AttributeErro
 ```python
 # or_scenario/scenario.py - add to Scenario class
 from typing import Type
+
 
 def set_algorithm(self, algo: Type[Algorithm], *args: Any, **kwargs: Any) -> None:
     """Instantiate and store an Algorithm."""
@@ -567,6 +567,7 @@ git commit -m "feat: add Scenario.set_algorithm() method"
 ```python
 # tests/test_scenario.py
 from unittest.mock import MagicMock
+
 
 def test_scenario_exec_algorithm():
     """Test exec_algorithm() calls algorithm.solve()."""
@@ -644,12 +645,7 @@ def test_scenario_load():
         def mapping(records: List[Dict[str, Any]]) -> None:
             run_order.append(name)
 
-        return LoadStep(
-            handler=handler,
-            mapping=mapping,
-            path=Path("test"),
-            table=f"{name}.json"
-        )
+        return LoadStep(handler=handler, mapping=mapping, path=Path("test"), table=f"{name}.json")
 
     scenario._load_steps = [make_step("step1"), make_step("step2")]
 
@@ -699,6 +695,7 @@ git commit -m "feat: add Scenario.load() method"
 # tests/test_scenario.py
 from register import Id
 
+
 def test_scenario_validate():
     """Test validate() calls Register.validate()."""
     scenario = Scenario(1)
@@ -731,6 +728,7 @@ Expected: FAIL with "Scenario has no attribute 'validate'" or AttributeError
 ```python
 # or_scenario/scenario.py - add to Scenario class
 from register import Id
+
 
 def validate(self, param: Parameter = Id) -> None:
     """Validate the Register data."""
@@ -780,10 +778,15 @@ class TestScenario(Scenario):
 
         def map_sales_data(records: List[Dict[str, Any]]) -> None:
             for r in records:
-                self.set(TestSalesVolume, (Product, Region),
-                        (r["product_id"], r["region_id"]), r["volume"])
-                self.set(TestPrice, (Product, Region),
-                        (r["product_id"], r["region_id"]), r["price"])
+                self.set(
+                    TestSalesVolume,
+                    (Product, Region),
+                    (r["product_id"], r["region_id"]),
+                    r["volume"],
+                )
+                self.set(
+                    TestPrice, (Product, Region), (r["product_id"], r["region_id"]), r["price"]
+                )
 
         self._load_steps = [
             LoadStep(
@@ -791,7 +794,7 @@ class TestScenario(Scenario):
                 mapping=map_sales_data,
                 path=data_dir,
                 table="sales.json",
-                strict=True
+                strict=True,
             )
         ]
 
@@ -911,23 +914,24 @@ from or_scenario import Scenario
 Product = Dimension("Product", "产品", "PROD")
 SalesVolume = Parameter(1, "sales_volume", "销量", float)
 
+
 class MyScenario(Scenario):
     def __init__(self, version_id):
         super().__init__(version_id)
 
         def map_data(records):
             for r in records:
-                self.set(SalesVolume, (Product,),
-                        (r["product_id"],), r["volume"])
+                self.set(SalesVolume, (Product,), (r["product_id"],), r["volume"])
 
         self._load_steps = [
             LoadStep(
                 handler=JsonHandler(),
                 mapping=map_data,
                 path=Path("data") / str(version_id),
-                table="sales.json"
+                table="sales.json",
             )
         ]
+
 
 # Use the scenario
 scenario = MyScenario("run-001")

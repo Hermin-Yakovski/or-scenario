@@ -30,6 +30,7 @@ from or_scenario import Scenario
 Product = Dimension("Product", "产品", "PROD")
 SalesVolume = Parameter(1, "sales_volume", "销量", float)
 
+
 class MyScenario(Scenario):
     def __init__(self, version_id):
         super().__init__(version_id)
@@ -41,6 +42,7 @@ class MyScenario(Scenario):
 
     def load(self):
         self.load_sales()
+
 
 scenario = MyScenario("run-001")
 scenario.load()
@@ -56,19 +58,26 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from or_scenario import Scenario, BaseRequest, BaseResponse
 
+
 class DomainRequest(BaseRequest):
     """Domain-specific configuration."""
+
     data_path: Path = Field(..., description="Path to data directory")
     algorithm_type: str = Field(default="optimizer")
 
+
 class DomainResult(BaseModel):
     """Computation results."""
+
     objective_value: float
     solution: dict
 
+
 class DomainResponse(BaseResponse):
     """Domain-specific response."""
+
     response: DomainResult
+
 
 class DomainScenario(Scenario):
     def __init__(self, request: BaseRequest):
@@ -85,16 +94,14 @@ class DomainScenario(Scenario):
 
     def response(self, include_debug: bool = False) -> BaseResponse:
         """Package results into response."""
-        result = DomainResult(
-            objective_value=100.0,
-            solution={"x": 10, "y": 20}
-        )
+        result = DomainResult(objective_value=100.0, solution={"x": 10, "y": 20})
         return DomainResponse(
             request_id=self._request.request_id,
             status=200,
             message="Optimization completed",
-            response=result
+            response=result,
         )
+
 
 # Usage
 try:
@@ -105,11 +112,7 @@ try:
     scenario.exec_algorithm()
     response = scenario.response()
 except Exception as e:
-    response = BaseResponse(
-        request_id=request.request_id,
-        status=500,
-        message=str(e)
-    )
+    response = BaseResponse(request_id=request.request_id, status=500, message=str(e))
 ```
 
 ## License

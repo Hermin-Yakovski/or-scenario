@@ -93,6 +93,7 @@ from pydantic import BaseModel, Field, Any  # Add this
 from or_scenario import BaseRequest
 from datetime import datetime
 
+
 def test_baserequest_creation():
     """Test BaseRequest can be created with default request_id."""
     request = BaseRequest()
@@ -110,10 +111,14 @@ Expected: FAIL with "BaseRequest not defined" or ImportError
 ```python
 # or_scenario/scenario.py - add after imports, before LoadStep class
 
+
 class BaseRequest(BaseModel):
     """Base request with common fields."""
-    request_id: int = Field(default_factory=lambda: int(datetime.now().strftime("%y%m%d%H%M%S%f")),
-                            description="identity of the data")
+
+    request_id: int = Field(
+        default_factory=lambda: int(datetime.now().strftime("%y%m%d%H%M%S%f")),
+        description="identity of the data",
+    )
 ```
 
 - [ ] **Step 5: Write failing test for BaseResponse**
@@ -122,13 +127,10 @@ class BaseRequest(BaseModel):
 # tests/test_scenario.py
 from or_scenario import BaseResponse
 
+
 def test_baseresponse_creation():
     """Test BaseResponse can be created with all fields."""
-    response = BaseResponse(
-        request_id=12345,
-        status=200,
-        message="Success"
-    )
+    response = BaseResponse(request_id=12345, status=200, message="Success")
     assert response.request_id == 12345
     assert response.status == 200
     assert response.message == "Success"
@@ -139,12 +141,7 @@ def test_baseresponse_creation():
 def test_baseresponse_with_response_field():
     """Test BaseResponse can hold custom response data."""
     custom_data = {"key": "value", "number": 42}
-    response = BaseResponse(
-        request_id=12345,
-        status=200,
-        message="Success",
-        response=custom_data
-    )
+    response = BaseResponse(request_id=12345, status=200, message="Success", response=custom_data)
     assert response.response == custom_data
 ```
 
@@ -158,8 +155,10 @@ Expected: FAIL with "BaseResponse not defined" or ImportError
 ```python
 # or_scenario/scenario.py - add after BaseRequest class
 
+
 class BaseResponse(BaseModel):
     """Base response with common fields."""
+
     request_id: int = Field(..., description="identity of the data")
     status: int = Field(..., description="status of the service")
     message: str = Field(default="Default message", description="message of the service")
@@ -194,7 +193,7 @@ git commit -m "feat: add BaseRequest and BaseResponse pydantic models"
 def test_scenario_request_attribute():
     """Test Scenario has _request attribute initialized to None."""
     scenario = Scenario(1)
-    assert hasattr(scenario, '_request')
+    assert hasattr(scenario, "_request")
     assert scenario._request is None
 ```
 
@@ -207,6 +206,7 @@ Expected: FAIL (scenario doesn't have _request attribute yet)
 
 ```python
 # or_scenario/scenario.py - modify Scenario class
+
 
 class Scenario:
     """Base class for domain-specific OR scenarios."""
@@ -314,10 +314,11 @@ git commit -m "feat: add abstract response() method to Scenario class"
 def test_public_api_exports():
     """Test BaseRequest and BaseResponse are exported in public API."""
     import or_scenario
-    assert hasattr(or_scenario, 'BaseRequest')
-    assert hasattr(or_scenario, 'BaseResponse')
-    assert 'BaseRequest' in or_scenario.__all__
-    assert 'BaseResponse' in or_scenario.__all__
+
+    assert hasattr(or_scenario, "BaseRequest")
+    assert hasattr(or_scenario, "BaseResponse")
+    assert "BaseRequest" in or_scenario.__all__
+    assert "BaseResponse" in or_scenario.__all__
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -368,17 +369,23 @@ git commit -m "feat: export BaseRequest and BaseResponse in public API"
 from pydantic import BaseModel
 from typing import Dict
 
+
 class TestRequest(BaseRequest):
     """Test request model for integration testing."""
+
     value: int = Field(default=10, description="test value")
+
 
 class TestResult(BaseModel):
     """Test result model."""
+
     computed_value: int
     metadata: Dict[str, str]
 
+
 class TestResponse(BaseResponse):
     """Test response model with specific response type."""
+
     response: TestResult
 ```
 
@@ -388,6 +395,7 @@ class TestResponse(BaseResponse):
 # tests/test_scenario.py
 def test_scenario_pydantic_integration():
     """Integration test: Scenario with Pydantic request/response."""
+
     # Create a test scenario that uses Pydantic models
     class TestScenario(Scenario):
         def __init__(self, request: BaseRequest):
@@ -398,13 +406,13 @@ def test_scenario_pydantic_integration():
             """Return response with computed result."""
             result = TestResult(
                 computed_value=self._request.value * multiplier,
-                metadata={"multiplier": str(multiplier)}
+                metadata={"multiplier": str(multiplier)},
             )
             return TestResponse(
                 request_id=self._request.request_id,
                 status=200,
                 message="Test completed",
-                response=result
+                response=result,
             )
 
     # Create request and scenario
@@ -447,6 +455,7 @@ git commit -m "test: add Pydantic integration test"
 # tests/test_scenario.py
 def test_scenario_backward_compatibility():
     """Test that scenarios without Pydantic still work."""
+
     # Old-style scenario without Pydantic
     class LegacyScenario(Scenario):
         def __init__(self, version_id: int):
@@ -559,21 +568,24 @@ from or_scenario import Scenario
 Product = Dimension("Product", "产品", "PROD")
 SalesVolume = Parameter(1, "sales_volume", "销量", float)
 
+
 class MyScenario(Scenario):
     def __init__(self, version_id):
         super().__init__(version_id)
 
         def map_data(records):
             for r in records:
-                self.set(SalesVolume, (Product,),
-                        (r["product_id"],), r["volume"])
+                self.set(SalesVolume, (Product,), (r["product_id"],), r["volume"])
 
-        self._load_steps = [LoadStep(
-            handler=JsonHandler(),
-            mapping=map_data,
-            path=Path("data") / str(version_id),
-            table="sales.json"
-        )]
+        self._load_steps = [
+            LoadStep(
+                handler=JsonHandler(),
+                mapping=map_data,
+                path=Path("data") / str(version_id),
+                table="sales.json",
+            )
+        ]
+
 
 scenario = MyScenario("run-001")
 scenario.load()
@@ -589,19 +601,26 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from or_scenario import Scenario, BaseRequest, BaseResponse
 
+
 class DomainRequest(BaseRequest):
     """Domain-specific configuration."""
+
     data_path: Path = Field(..., description="Path to data directory")
     algorithm_type: str = Field(default="optimizer")
 
+
 class DomainResult(BaseModel):
     """Computation results."""
+
     objective_value: float
     solution: dict
 
+
 class DomainResponse(BaseResponse):
     """Domain-specific response."""
+
     response: DomainResult
+
 
 class DomainScenario(Scenario):
     def __init__(self, request: BaseRequest):
@@ -611,16 +630,14 @@ class DomainScenario(Scenario):
 
     def response(self, include_debug: bool = False) -> BaseResponse:
         """Package results into response."""
-        result = DomainResult(
-            objective_value=100.0,
-            solution={"x": 10, "y": 20}
-        )
+        result = DomainResult(objective_value=100.0, solution={"x": 10, "y": 20})
         return DomainResponse(
             request_id=self._request.request_id,
             status=200,
             message="Optimization completed",
-            response=result
+            response=result,
         )
+
 
 # Usage
 try:
@@ -631,11 +648,7 @@ try:
     scenario.exec_algorithm()
     response = scenario.response()
 except Exception as e:
-    response = DomainResponse(
-        request_id=request.request_id,
-        status=500,
-        message=str(e)
-    )
+    response = DomainResponse(request_id=request.request_id, status=500, message=str(e))
 ```
 
 ## License
