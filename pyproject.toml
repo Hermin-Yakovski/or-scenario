@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "or-scenario"
-version = "0.4.0"
+version = "0.3.0"
 description = "Template framework for Operations Research scenarios"
 authors = [{name = "HerminYakovski", email = "hemin.ye@qq.com"}]
 readme = "README.md"

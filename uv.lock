@@ -629,7 +629,7 @@ wheels = [
 
 [[package]]
 name = "or-scenario"
-version = "0.4.0"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "data-access-layer", extra = ["async"] },
