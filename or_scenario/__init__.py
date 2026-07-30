@@ -6,4 +6,4 @@ from .scenario import Scenario
 from .schema import BaseRequest, BaseResponse
 
 __all__ = ["BaseRequest", "BaseResponse", "Scenario", "orm"]
-__version__ = "0.3.0"
+__version__ = "0.4.0"
